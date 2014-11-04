@@ -1768,6 +1768,12 @@ static int r_debug_native_drx(RDebug *dbg, int n, ut64 addr, int sz, int rwx, in
 		drx_set (regs, n, addr, -1, 0, 0);
 	} else {
 		drx_set (regs, n, addr, sz, rwx, g);
+		// set break
+		ptrace(PTRACE_POKEUSER,dbg->tid,r_offsetof (
+				struct user, regs[i]),addr);
+		// reset dr6 each time
+		ptrace(PTRACE_POKEUSER,dbg->tid,r_offsetof (
+				struct user, regs[6]),0);
 	}
 	r_reg_setv (R, "dr0", regs[0]);
 	r_reg_setv (R, "dr1", regs[1]);

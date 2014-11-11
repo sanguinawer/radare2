@@ -9,7 +9,7 @@ static unsigned char buffer[64];
 void getregs(const ut8 *buf,ut8 * b,char * oper) {
 	const ut8 * c;
 	c=buf+1;
-	switch(c) {
+	switch(*c) {
 	case 1:
 		snprintf(b, 64, "reg %s imm",oper);			  							
 		break;
@@ -27,7 +27,7 @@ void getregs(const ut8 *buf,ut8 * b,char * oper) {
 void getreg(const ut8 *buf,const ut8 * b) {
 	const ut8 * c;
 	c=buf+1;
-	switch(c) {
+	switch(*c) {
 	case 1:
 		snprintf(b, 64, "imm");			  							
 		break;

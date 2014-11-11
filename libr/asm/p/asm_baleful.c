@@ -121,49 +121,49 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 	  
       case 15:
 		op->size = 5;
-        p = buf + 1
+        p = buf + 1;
 		getreg(*p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "call %s",buffer);
 		break;
       case 14:
 		op->size = 5;
-        p = buf + 1
+        p = buf + 1;
 		getreg(*p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jmp  %s",buffer);
 		break;
       case 16:
 		op->size = 5;
-        p = buf + 1
+        p = buf + 1;
 		getreg(*p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jz %s",buffer);
 		break;
       case 17:
 		op->size = 5;
-        p = buf + 1
+        p = buf + 1;
 		getreg(*p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "js %s",buffer);
 		break;
       case 18:
 		op->size = 5;
-        p = buf + 1
+        p = buf + 1;
 		getreg(*p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jbe %s",buffer);
 		break;
       case 19:
 		op->size = 5;
-        p = buf + 1
+        p = buf + 1;
 		getreg(*p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jg %s",buffer);
 		break;
       case 20:
 		op->size = 5;
-        p = buf + 1
+        p = buf + 1;
 		getreg(*p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jns %s",buffer);
 		break;
       case 21:
 		op->size = 5;
-        p = buf + 1
+        p = buf + 1;
 		getreg(*p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jnz %s",buffer);
 		break;
@@ -174,7 +174,7 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 		break;	
       case 7:
 		op->size = 3;
-		p = buf + 1
+		p = buf + 1;
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= -regY",buffer);
 		//getregs(0,buffer,"= -");
 		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "%s",buffer);		
@@ -182,7 +182,7 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 		break;
 	  case 8:
 		op->size = 3;
-		p = buf + 1
+		p = buf + 1;
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= ~");regY",buffer);
 		//getregs(0,buffer,"= ~");
 		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "%s",buffer);

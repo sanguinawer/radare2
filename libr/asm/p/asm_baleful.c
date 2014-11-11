@@ -38,15 +38,7 @@ void getreg(const ut8 *buf,ut8 * b) {
 
 static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 	const ut8 *p;
-	const ut8  *r   = 0;
-	const ut8  *r0  = 0;
-	const ut8  *r1  = 0;
-	const ut8  *r2  = 0;
-	const ut8  *r3  = 0;
-	const ut8  *p   = 0; 
-	const ut32 *imm = 0;
-	const ut32 *imm1 = 0;
-	
+
 	switch (*buf) {
 	  case 2:
 		p = buf + 1;
@@ -183,7 +175,7 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 	  case 8:
 		op->size = 3;
 		p = buf + 1;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= ~");regY",buffer);
+		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= ~regY",buffer);
 		//getregs(0,buffer,"= ~");
 		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "%s",buffer);
 		
@@ -200,21 +192,21 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 		break;
 	  case 25:
 		op->size = 2;
-        p = buf + 1
+        p = buf + 1;
 		getreg(p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "++ %s",buffer);
 		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "++reg");
 		break;
       case 26:
 		op->size = 2;
-		p = buf + 1
+		p = buf + 1;
 		getreg(p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "-- %s",buffer);
 			//snprintf (op->buf_asm, R_ASM_BUFSIZE, "--reg");
 		break;
      case 31:
 		op->size = 2;
-	    p = buf + 1
+	    p = buf + 1;
 		getreg(p,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "pop %s",buffer);
 		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "pop r" );

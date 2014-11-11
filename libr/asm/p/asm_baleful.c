@@ -5,7 +5,7 @@
 #include <r_types.h>
 #include <r_lib.h>
 #include <r_asm.h>
-static unsigned char strstrbuffer[64];
+static unsigned char strbuffer[64];
 void getregs(const ut8 *buf,ut8 * b,char * oper) {
 	const ut8 * c;
 	c=buf+1;

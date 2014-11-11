@@ -42,66 +42,66 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 	switch (*buf) {
 	  case 2:
 		p = buf + 1;
-		getregs(*p,buffer,"+");
+		getregs(buf,buffer,"+");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=%s",buffer);
 		break;
       case 3:
  		p = buf + 1;
-		getregs(*p,buffer,"-");
+		getregs(buf,buffer,"-");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=%s",buffer);
 		break;     
       case 4:
  		p = buf + 1;
-		getregs(*p,buffer,"*");
+		getregs(buf,buffer,"*");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=%s",buffer);
 		break;  
       case 5:
 		p  = buf + 1;
-		getregs(*p,buffer,"/");
+		getregs(buf,buffer,"/");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=%s",buffer);
 		break;
       case 6:
 		p = buf + 1;
-		getregs(*p,buffer,"^");
+		getregs(buf,buffer,"^");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=%s",buffer);
 		break; 
       case 9:
 		p = buf + 1;
-		getregs(*p,buffer,"&");
+		getregs(buf,buffer,"&");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=%s",buffer);
 		break; 
       case 10:
 		p = buf + 1;
-		getregs(*p,buffer,"|");
+		getregs(buf,buffer,"|");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=%s",buffer);
 		break; 
       case 12:
 		p = buf + 1;
-		getregs(*p,buffer,"<<");
+		getregs(buf,buffer,"<<");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=%s",buffer);
 		break; 
       case 13:
 		p = buf + 1;
-		getregs(*p,buffer,">>");
+		getregs(buf,buffer,">>");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=%s",buffer);
 		break;
       case 22:
         p = buf + 1;
-		getregs(*p,buffer,"and");
+		getregs(buf,buffer,"and");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "%s",buffer);
         break;
       case 23:
         p = buf + 1;
-		getregs(*p,buffer,",");
+		getregs(buf,buffer,",");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "cmp %s",buffer);
       case 24:
         p = buf + 1;
-        getregs(*p,buffer,",");
+        getregs(buf,buffer,",");
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "mov %s",buffer);
 		break;
 	  case 30:
         p = buf + 1;
-        if (*p) {
+        if (buf) {
 		  op->size = 6;
 		  snprintf (op->buf_asm, R_ASM_BUFSIZE, "push imm");
         }
@@ -114,49 +114,49 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
       case 15:
 		op->size = 5;
         p = buf + 1;
-		getreg(*p,buffer);
+		getreg(buf,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "call %s",buffer);
 		break;
       case 14:
 		op->size = 5;
         p = buf + 1;
-		getreg(*p,buffer);
+		getreg(buf,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jmp  %s",buffer);
 		break;
       case 16:
 		op->size = 5;
         p = buf + 1;
-		getreg(*p,buffer);
+		getreg(buf,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jz %s",buffer);
 		break;
       case 17:
 		op->size = 5;
         p = buf + 1;
-		getreg(*p,buffer);
+		getreg(buf,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "js %s",buffer);
 		break;
       case 18:
 		op->size = 5;
         p = buf + 1;
-		getreg(*p,buffer);
+		getreg(buf,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jbe %s",buffer);
 		break;
       case 19:
 		op->size = 5;
         p = buf + 1;
-		getreg(*p,buffer);
+		getreg(buf,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jg %s",buffer);
 		break;
       case 20:
 		op->size = 5;
         p = buf + 1;
-		getreg(*p,buffer);
+		getreg(buf,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jns %s",buffer);
 		break;
       case 21:
 		op->size = 5;
         p = buf + 1;
-		getreg(*p,buffer);
+		getreg(buf,buffer);
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jnz %s",buffer);
 		break;
 	  case 11:

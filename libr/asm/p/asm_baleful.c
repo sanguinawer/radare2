@@ -24,7 +24,7 @@ void getregs(const ut8 *buf,ut8 * b,char * oper) {
 	}
 	
 }
-void getreg(const ut8 *buf,ut8 * b) {
+void getreg(const ut8 *buf,const ut8 * b) {
 	const ut8 * c;
 	c=buf+1;
 	switch(c) {
@@ -161,13 +161,13 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 		break;
 	  case 11:
 		op->size = 3;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= regY==0",buffer);
+        snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= regY==0");
   	    //VM_REG[v15] = v16_1 == 0;
 		break;	
       case 7:
 		op->size = 3;
 		p = buf + 1;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= -regY",buffer);
+		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= NEG regY");
 		//getregs(0,buffer,"= -");
 		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "%s",buffer);		
 		//reg,reg   ; regX = -regY
@@ -175,7 +175,7 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 	  case 8:
 		op->size = 3;
 		p = buf + 1;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= ~regY",buffer);
+		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= NOT regY");
 		//getregs(0,buffer,"= ~");
 		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "%s",buffer);
 		

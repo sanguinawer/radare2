@@ -161,7 +161,7 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 			imm = buf + 3;
 			r_strbuf_setf(b,  "%s r_%02x,0x%04x",oper,*r1,*imm);
 			*/
-			//r_strbuf_setf(b,  "%s",oper);
+			r_strbuf_setf(b,  "%s",oper);
 			size=7;
 			break;
 		case 0:
@@ -169,7 +169,7 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 			r1 = buf + 3;
 			r_strbuf_setf(b,  "%s r_%02x,r_%02x",oper,*r1,*r2);
 			*/
-			//r_strbuf_setf(b,  "%s",oper);
+			r_strbuf_setf(b,  "%s",oper);
 			size=4;
 			break;
 		default:
@@ -177,7 +177,7 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 			r1 = buf + 3;
 			r_strbuf_setf(b,  "%s r_%02x,r_%02x",oper,*r1,*r2);
 			*/
-			//r_strbuf_setf(b,  "%s",oper);
+			r_strbuf_setf(b,  "%s",oper);
 			size=4;
 			break;
 		}
@@ -189,21 +189,21 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 			/*imm = buf + 2;
 			r_strbuf_setf(b, "%s 0x%04x",oper,*imm);			  							
 			*/
-			//r_strbuf_setf(b,  "%s",oper);
+			r_strbuf_setf(b,  "%s",oper);
 			size=6;
 			break;
 		case 0:
 			/*r0  = buf + 2;
 			r_strbuf_setf(b, "%s r_%02x",oper,*r0);			  							
 			*/
-			//r_strbuf_setf(b,  "%s",oper);
+			r_strbuf_setf(b,  "%s",oper);
 			size=3;
 			break;
 		default:
 			/*r0  = buf + 2;
 			r_strbuf_setf(b, "%s r_%02x",oper,*r0);			  							
 			*/
-			//r_strbuf_setf(b,  "%s",oper);
+			r_strbuf_setf(b,  "%s",oper);
 			size=3;
 			break;
 		}		
@@ -211,14 +211,14 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 		/*imm  = buf + 2;
 		snprintf(b, 64, "%s 0x%04x",oper,*imm);			  							
 		*/
-	    //r_strbuf_setf(b,  "%s",oper);
+	    r_strbuf_setf(b,  "%s",oper);
 		size=5;		
 		break;
 	case 6://2
 		/*r0  = buf + 2;
 		snprintf(b, 64, "%s r_%02x",oper,*r0);			  							
 		*/
-	    //r_strbuf_setf(b,  "%s",oper);
+	    r_strbuf_setf(b,  "%s",oper);
 		size=2;		
 		break;
 	break;

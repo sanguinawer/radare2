@@ -37,7 +37,7 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 		case 4:
 			imm  = buf + 3;
 			imm1 = buf + 7;
-			r_strbuf_setf(b,  "r_%02x = 0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
+			r_strbuf_setf(b,  "r_%02x = 0x%04x %s 0x%04x",*r0,*imm,oper,*imm1);	
 			size=11;
 			break;
 		case 0:
@@ -73,7 +73,7 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 		case 4:
 			imm  = buf + 4;
 			imm1 = buf + 8;
-			r_strbuf_setf(b,  "r_%02x = 0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
+			r_strbuf_setf(b,  "r_%02x = 0x%04x %s 0x%04x",*r0,*imm,oper,*imm1);	
 			size=12;
 			break;
 		case 0:
@@ -95,31 +95,31 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 		case 1:
 			r1  = buf + 2;
 			imm = buf + 3;
-			r_strbuf_setf(b,  "r_%02x %s 0x%04x",*r0,*r1,oper,*imm);
+			r_strbuf_setf(b,  "r_%02x %s 0x%04x",*r1,oper,*imm);
 			size=7;
 			break;
 		case 2:
 			imm  = buf + 2;
 			r1   = buf + 6;
-			r_strbuf_setf(b,  "0x%04x %s r_%02x",*r0,*imm,oper,*r1);		
+			r_strbuf_setf(b,  "0x%04x %s r_%02x",*imm,oper,*r1);		
 			size=7;
 			break;
 		case 4:
 			imm  = buf + 2;
 			imm1 = buf + 6;
-			r_strbuf_setf(b,  "0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
+			r_strbuf_setf(b,  "0x%04x %s 0x%04x",*imm,oper,*imm1);	
 			size=10;
 			break;
 		case 0:
 			r1  = buf + 2;
 			r2  = buf + 3;
-			r_strbuf_setf(b,  "r_%02x %s r_%02x",*r0,*r1,oper,*r2);	
+			r_strbuf_setf(b,  "r_%02x %s r_%02x",*r1,oper,*r2);	
 			size=4;
 			break;
 		default:
 			r1  = buf + 2;
 			r2  = buf + 3;
-			r_strbuf_setf(b,  "r_%02x %s r_%02x",*r0,*r1,oper,*r2);		
+			r_strbuf_setf(b,  "r_%02x %s r_%02x",*r1,oper,*r2);		
 			size=4;
 			break;
 		}	
@@ -167,12 +167,12 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 		}		
 	case 5: //5
 		imm  = buf + 2;
-		snprintf(b, 64, "%s 0x%04x",*imm);			  							
+		snprintf(b, 64, "%s 0x%04x",oper,*imm);			  							
 		size=5;		
 		break;
 	case 6://2
 		r0  = buf + 2;
-		snprintf(b, 64, "%s r_%02x",*r0);			  							
+		snprintf(b, 64, "%s r_%02x",oper,*r0);			  							
 		size=2;		
 		break;
 	break;
@@ -351,7 +351,13 @@ static int baleful_op(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buf, int l
 		op->size = 1;
 		r_strbuf_setf (&op->esil, "nop");
 		break;
-      default:
+	  case 29:
+        op->type = R_ANAL_OP_TYPE_NOP;
+		op->size = 1;
+		r_strbuf_setf (&op->esil, "end virtual");
+		break;
+
+	  default:
 		op->type = R_ANAL_OP_TYPE_NOP;
 		op->size = 1;
 		r_strbuf_setf (&op->esil, "nop");

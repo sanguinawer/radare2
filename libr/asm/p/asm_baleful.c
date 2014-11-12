@@ -247,6 +247,10 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 		op->size = 1;
 		strcpy (op->buf_asm, "nop");			  							  
 		break;
+	   case 29:
+		op->size = 1;
+		strcpy (op->buf_asm, "end virtual");
+		break;
 	  default:
 		op->size = 1;
 		strcpy (op->buf_asm, "nop");

@@ -7,7 +7,7 @@
 #include <r_anal.h>
 
 static unsigned char strbuffer[64];
-int anal_baleful_getregs(const ut8 *buf,ut8 * b,char * oper) {
+int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper) {
 	const ut8 * c;
 	const ut8  *r0;
 	const ut8  *r1;
@@ -17,37 +17,41 @@ int anal_baleful_getregs(const ut8 *buf,ut8 * b,char * oper) {
 	
 	int size=0;
 	c   = buf  +1;
-	strcpy(b,oper);
 	r0  = buf + 2;
 	switch(*c) {
 	case 1:
 		r1  = buf + 3;
 		imm = buf + 4;
-        snprintf(b, 64, "r_%02x = r_%02x %s 0x%04x",*r0,*r1,oper,*imm);		  							
+        //snprintf(b, 64, "r_%02x = r_%02x %s 0x%04x",*r0,*r1,oper,*imm);		  							
+		r_strbuf_setf(b,  "r_%02x = r_%02x %s 0x%04x",*r0,*r1,oper,*imm);
 		size=8;
 		break;
 	case 2:
 		imm  = buf + 3;
 		r1   = buf + 4;
-        snprintf(b, 64, "r_%02x = 0x%04x %s r_%02x",*r0,*imm,oper,*r1);			  							
+        //snprintf(b, 64, "r_%02x = 0x%04x %s r_%02x",*r0,*imm,oper,*r1);		
+		r_strbuf_setf(b,  "r_%02x = 0x%04x %s r_%02x",*r0,*imm,oper,*r1);		
 		size=8;
 		break;
 	case 4:
 		imm  = buf + 3;
 		imm1 = buf + 7;
-		snprintf(b, 64, "r_%02x = 0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);		
+		//snprintf(b, 64, "r_%02x = 0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
+		r_strbuf_setf(b,  "r_%02x = 0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
 		size=11;
 		break;
 	case 0:
 	    r1  = buf + 3;
 		r2  = buf + 4;
-		snprintf(b, 64, "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);		  							
+		//snprintf(b, 64, "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);	
+		r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);	
 		size=5;
 		break;
 	default:
 	    r1  = buf + 3;
 		r2  = buf + 4;
-		snprintf(b, 64, "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);		  							
+		//snprintf(b, 64, "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);		
+		r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);		
 		size=5;
 		break;
 	}
@@ -82,43 +86,43 @@ static int baleful_op(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buf, int l
 	switch (buf[0]) {
       case 2:
         op->type = R_ANAL_OP_TYPE_ADD;
-    	op->size = anal_baleful_getregs(buf,strbuffer,"+");
-		r_strbuf_setf (&op->esil, "%s",strbuffer);
+    	op->size = anal_baleful_getregs(buf,&op->esil,"+");
+		//r_strbuf_setf (&op->esil, "%s",strbuffer);
 		break;     
       case 4:
         op->type = R_ANAL_OP_TYPE_MUL;
-	   	op->size = anal_baleful_getregs(buf,strbuffer,"*");
-		r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"*");
+		//r_strbuf_setf (&op->esil, "%s",strbuffer);
 		break;  
       case 5: // testear
 		op->type = R_ANAL_OP_TYPE_DIV;
-	   	op->size = anal_baleful_getregs(buf,strbuffer,"/");
-		r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"/");
+		//r_strbuf_setf (&op->esil, "%s",strbuffer);
 		break;
       case 6:
 		op->type = R_ANAL_OP_TYPE_XOR;
-	   	op->size = anal_baleful_getregs(buf,strbuffer,"^");
-        r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"^");
+        //r_strbuf_setf (&op->esil, "%s",strbuffer);
 		break; 
       case 9:
         op->type = R_ANAL_OP_TYPE_AND;
-	   	op->size = anal_baleful_getregs(buf,strbuffer,"&");
-		r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"&");
+		//r_strbuf_setf (&op->esil, "%s",strbuffer);
 		break; 
       case 10:
         op->type = R_ANAL_OP_TYPE_OR;
-	   	op->size = anal_baleful_getregs(buf,strbuffer,"|");
-		r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"|");
+		//r_strbuf_setf (&op->esil, "%s",strbuffer);
 		break; 
       case 12:
         op->type = R_ANAL_OP_TYPE_ROL;
-	   	op->size = anal_baleful_getregs(buf,strbuffer,"<<");
-		r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"<<");
+		//r_strbuf_setf (&op->esil, "%s",strbuffer);
 		break; 
       case 13:
         op->type = R_ANAL_OP_TYPE_ROR;
-	   	op->size = anal_baleful_getregs(buf,strbuffer,">>");
-		r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,">>");
+		//r_strbuf_setf (&op->esil, "%s",strbuffer);
 		break;
 		
 

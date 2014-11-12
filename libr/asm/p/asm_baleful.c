@@ -7,44 +7,127 @@
 #include <r_asm.h>
 
 static unsigned char strbuffer[64];
-int asm_balefu_getregs(const ut8 *buf,ut8 * b,char * oper) {
+int asm_baleful_getregs(const ut8 *buf,ut8 * b,char * oper,int type) {
 	const ut8 * c;
 	int size=0;
 	c=buf+1;
-	switch(*c) {
-	case 1:
-		snprintf(b, 64, "reg %s imm",oper);			  							
-		size=8;
+	switch(type) {
+	case 0: // 8 8 11 5
+		switch(*c) {
+		case 1:
+			snprintf(b, 64, "reg = reg %s imm",oper);			  							
+			size=8;
+			break;
+		case 2:
+			snprintf(b, 64, "reg = imm %s reg",oper);			  							
+			size=8;
+			break;
+		case 4:
+			snprintf(b, 64, "reg = imm %s imm",oper);		
+			size=11;
+			break;
+		case 0:
+			size=5;
+			snprintf(b, 64, "reg = reg %s reg",oper);			  							
+			break;
+		default:
+			snprintf(b, 64, "reg = reg %s reg",oper);			  							
+			size=5;
+			break;
+		}
 		break;
-	case 2:
-		snprintf(b, 64, "imm %s reg",oper);			  							
-		size=8;
+	case 1: // 9 9 12 6
+		switch(*c) {
+		case 1:
+			snprintf(b, 64, "reg %s imm",oper);			  							
+			size=9;
+			break;
+		case 2:
+			snprintf(b, 64, "imm %s reg",oper);			  							
+			size=9;
+			break;
+		case 4:
+			snprintf(b, 64, "imm %s imm",oper);		
+			size=12;
+			break;
+		case 0:
+			size=6;
+			snprintf(b, 64, "reg %s reg",oper);			  							
+			break;
+		default:
+			snprintf(b, 64, "reg %s reg",oper);			  							
+			size=6;
+			break;
+		}
 		break;
-	case 4:
-		snprintf(b, 64, "imm %s imm",oper);		
-		size=11;
+	case 2: // 7 7 10 4
+		switch(*c) {
+		case 1:
+			snprintf(b, 64, "reg %s imm",oper);			  							
+			size=7;
+			break;
+		case 2:
+			snprintf(b, 64, "imm %s reg",oper);			  							
+			size=7;
+			break;
+		case 4:
+			snprintf(b, 64, "imm %s imm",oper);		
+			size=10;
+			break;
+		case 0:
+			size=4;
+			snprintf(b, 64, "reg %s reg",oper);			  							
+			break;
+		default:
+			snprintf(b, 64, "reg %s reg",oper);			  							
+			size=4;
+			break;
+		}
+		break;		
+		
+	case 3: //7 4
+		switch(*c) {
+		case 1:
+			snprintf(b, 64, "%s reg,imm",oper);			  							
+			size=7;
+			break;
+		case 0:
+			size=4;
+			snprintf(b, 64, "%s reg,reg",oper);			  							
+			break;
+		default:
+			snprintf(b, 64, "%s reg,reg",oper);			  							
+			size=4;
+			break;
+		}
 		break;
-	case 0:
+	case 4: //6 3
+		switch(*c) {
+		case 1:
+			snprintf(b, 64, "%s imm",oper);			  							
+			size=6;
+			break;
+		case 0:
+			size=3;
+			snprintf(b, 64, "%s reg",oper);			  							
+			break;
+		default:
+			snprintf(b, 64, "%s reg",oper);			  							
+			size=4;
+			break;
+		}
+		break;
+	case 5: //5
+		snprintf(b, 64, "%s imm",oper);			  							
 		size=5;
-		snprintf(b, 64, "reg %s reg",oper);			  							
 		break;
-	default:
-		snprintf(b, 64, "reg %s reg",oper);			  							
-		size=5;
+    case 6: //2
+		snprintf(b, 64, "%s reg",oper);			  							
+		size=2;
 		break;
+
 	}
 	return size;
-}
-void asm_balefu_getreg(ut8 c,const ut8 * b) {
-	//const ut8 * c;
-	//c=buf+1;
-	switch(c) {
-	case 0:
-		snprintf(b, 64, "imm");			  							
-		break;
-	default:
-		snprintf(b, 64, "reg");			  							
-	}
 }
 
 static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
@@ -55,195 +138,108 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 	const ut32 *imm1;
 
 	switch (*buf) {
-	  case 2:
-		op->size = asm_balefu_getregs(buf,strbuffer,"+");
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "reg = %s %i",strbuffer,op->size);
+	  case 2://8 8 11 5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"+",0);
 		break;
-      case 3:
-		op->size = asm_balefu_getregs(buf,strbuffer,"-");
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "reg = %s",strbuffer);
+      case 3://8 8 11 5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"-",0);
 		break;     
-      case 4:
-		op->size = asm_balefu_getregs(buf,strbuffer,"*");
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "reg = %s",strbuffer);
+      case 4://8 8 11 5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"*",0);
 		break;  
-      case 5: // testear
-		op->size = asm_balefu_getregs(buf,strbuffer,"/");
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "reg = %s",strbuffer);
-		break;
-      case 6:
-		op->size = asm_balefu_getregs(buf,strbuffer,"^");
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "reg = %s",strbuffer);
+      case 6://8 8 11 5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"^",0);
 		break; 
-      case 9:
-		op->size = asm_balefu_getregs(buf,strbuffer,"&");
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "reg = %s",strbuffer);
+      case 9://8 8 11 5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"&",0);
 		break; 
-      case 10:
-		op->size = asm_balefu_getregs(buf,strbuffer,"|");
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "reg = %s",strbuffer);
+      case 10://8 8 11 5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"|",0);
 		break; 
-      case 12:
-		op->size = asm_balefu_getregs(buf,strbuffer,"<<");
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "reg = %s",strbuffer);
+      case 12://8 8 11 5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"<<",0);
 		break; 
-      case 13:
-		op->size = asm_balefu_getregs(buf,strbuffer,">>");
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "reg = %s",strbuffer);
+      case 13://8 8 11 5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,">>",0);
+		break;
+
+      case 5: // //9 9 12 6
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"/",1);
 		break;
 
 
-
-      case 22:
-		p = buf + 1;
-       	if ( *p == 1 ) {
-		  op->size = 7;
-		  strcpy(op->buf_asm, "reg and imm,");
-        }
-	    if ( *p == 2 ) {
-		  op->size = 7;
-		  strcpy(op->buf_asm, "imm and reg,");
-		}
-		if ( *p == 4 ) {
-		  op->size = 10;
-       	  strcpy(op->buf_asm, "imm1 and imm2");
-        }
-        if ( *p==0 ) {
-		  op->size = 4;
-       	  strcpy(op->buf_asm, "reg1 and reg2");
-        }
+      case 22: // 7 7 10 4
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"and",2);
 		break;
-      case 23:
-		p = buf + 1;
-	    if ( *p == 1 ) {
-		  op->size = 7;
-          strcpy(op->buf_asm, "cmp reg,imm");
-		} 
-        if ( *p == 2 ) {			  
-		  op->size = 7;
-          strcpy(op->buf_asm, "cmp imm,reg");
-        }
-        if ( *p == 4 ) {
-		  op->size = 10;
-          strcpy(op->buf_asm, "cmp imm1,imm2");
-        }
-        if ( *p==0 ) {
-		  op->size = 4;
-          strcpy(op->buf_asm, "cmp reg1,reg2");
-        }		
+      case 23: // 7 7 10 4
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"cmp",2);
 		break;
-	  case 24:
-        p = buf + 1;
-		if ( *p == 1 ) {
-   		  op->size=7;
-          strcpy(op->buf_asm, "mov reg,imm");
-		}
-		else {
-		  op->size=4;
-          strcpy(op->buf_asm, "mov reg1,reg2");
-		}
+	  case 24: //7 4
+        op->size = asm_baleful_getregs(buf,op->buf_asm,"mov",3);
 		break;
-	  case 30:
-        p = buf + 1;
-        if (*p) {
-		  op->size = 6;
-		  strcpy(op->buf_asm, "push imm");
-        }
-        else {
-		  op->size = 3;
-		  strcpy(op->buf_asm, "push reg");
-        }
+	  case 30: // 6 3
+        op->size = asm_baleful_getregs(buf,op->buf_asm,"push",4);
+		break;
+      case 15: //5
+  	    op->size = asm_baleful_getregs(buf,op->buf_asm,"call",5);
+		break;
+      case 14: //5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"jmp",5);
+		break;
+      case 16: //5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"jz",5);
+		break;
+      case 17: //5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"js",5);
+		break;
+      case 18: //5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"jbe",5);
+		break;
+      case 19: //5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"jg",5);
+		break;
+      case 20: //5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"jns",5);
+		break;
+      case 21: //5
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"jnz",5);
 		break;
 
-
-
-      case 15:
-		op->size = 5;
-		asm_balefu_getreg(0,strbuffer);
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "call %s",strbuffer);
-		break;
-      case 14:
-		op->size = 5;
-		asm_balefu_getreg(0,strbuffer);
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jmp  %s",strbuffer);
-		break;
-      case 16:
-		op->size = 5;
-		asm_balefu_getreg(0,strbuffer);
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jz %s",strbuffer);
-		break;
-      case 17:
-		op->size = 5;
-		asm_balefu_getreg(0,strbuffer);
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "js %s",strbuffer);
-		break;
-      case 18:
-		op->size = 5;
-		asm_balefu_getreg(0,strbuffer);
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jbe %s",strbuffer);
-		break;
-      case 19:
-		op->size = 5;
-		asm_balefu_getreg(0,strbuffer);
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jg %s",strbuffer);
-		break;
-      case 20:
-		op->size = 5;
-		asm_balefu_getreg(0,strbuffer);
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jns %s",strbuffer);
-		break;
-      case 21:
-		op->size = 5;
-		asm_balefu_getreg(0,strbuffer);
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "jnz %s",strbuffer);
-		break;
-
-      case 27:
+      case 27: //3
 		op->size = 3;
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "mov reg,[reg]");
 		break;
-      case 28://0x1c
+      case 28: //3                                                  //0x1c
 		op->size = 3;
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "mov [reg],reg");
 		break;
-	  case 11:
+	  case 11: //3
 		op->size = 3;
         snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= regY==0");
-  	    //VM_REG[v15] = v16_1 == 0;
 		break;	
-      case 7:
+      case 7: //3
 		op->size = 3;
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= NEG regY");
 		break;
-	  case 8:
+	  case 8: //3
 		op->size = 3;
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= NOT regY");
 		break;
 
-	  case 25:
-		op->size = 2;
-		//asm_balefu_getreg(0,strbuffer);
-		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "++ %s",strbuffer);
-		strcpy (op->buf_asm,"++reg");
+	  case 25: //2
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"++",6);
 		break;
-      case 26:
-		op->size = 2;
-		//asm_balefu_getreg(0,strbuffer);
-		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "-- %s",strbuffer);
-		strcpy(op->buf_asm, "--reg");
+      case 26: //2
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"--",6);
 		break;
-     case 31:
-		op->size = 2;
-		//asm_balefu_getreg(0,strbuffer);
-		//snprintf (op->buf_asm, R_ASM_BUFSIZE, "pop %s",strbuffer);
-		strcpy (op->buf_asm, "pop reg" );
+     case 31: //2
+		op->size = asm_baleful_getregs(buf,op->buf_asm,"pop",6);
+		break;
+      case 32: // 2
+        op->size = asm_baleful_getregs(buf,op->buf_asm,"apicall",6);
 		break;
 
-      case 32:
-		op->size = 2;
-		strcpy (op->buf_asm, "apicall");
-		break;
-      case 1:
+	  case 1:
 		op->size = 1;
         strcpy (op->buf_asm, "ret");			  							  
 		break;
@@ -277,402 +273,3 @@ struct r_lib_struct_t radare_plugin = {
 	.data = &r_asm_plugin_baleful
 };
 #endif
-
-
-/*
-case 2:
-		p = buf + 1;
-		if ( *p == 1 ) {
-		  op->size = 8;
-  	      snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r + imm");
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 8;
-	  	      snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm + r");			  							  
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 11;
-	  	        snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm + imm");			  							  
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  op->size = 5;
-	  	      snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r + r");			  							  
-            }
-          }
-        }
-		break;
-      case 3:
- 		p = buf + 1;
-		if ( *p == 1 ) {
-		  op->size = 8;
-	      snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r - imm");			  							  
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 8;
-  		      snprintf (op->buf_asm,R_ASM_BUFSIZE, "r=imm - r");			  							  
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 11;
-		        snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm - imm");			  							  
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  op->size = 5;
-		      snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r - r");			  							  
-            }
-          }
-        }
-		break;     
-      case 4:
- 		p = buf + 1;
-		if ( *p == 1 ) {
-		  op->size = 8;
- 	      snprintf (op->buf_asm,  R_ASM_BUFSIZE,"r=r * imm");			  				
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 8;
-		      snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm * r");			  				
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 11;
-			    snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm * imm");			  				
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  op->size = 5;
-			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r * r");			  				
-            }
-          }
-        }
-		break;  
-      case 5:
-		p  = buf + 1;
-        if ( *p == 1 ) {
-		  op->size = 8;
-	      snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r / imm");			  				
-        }
-        else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 8;
-			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm / r");			  				
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 11;
-   			    snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm / imm");			  				
-              }
-            }
-          }
-          else {
-            if ( !*p ) {
-			  op->size = 5;
-   			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r / r");			  				
-            }
-          }
-        }
-		break;
-      case 6:
-		p = buf + 1;
-		if ( *p == 1 ) {
-		  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r ^ imm");			  				
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 8;
- 			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm ^ r");			  				
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 11;
-   			   snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm ^ imm");			  				
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  op->size = 5;
-   			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r ^ r");			  
-            }
-          }
-        }
-		break; 
-      case 9:
-		p = buf + 1;
-		if ( *p == 1 ) {
-		  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r & imm");			  
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 8;
-   			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm & r");			  
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 11;
-  			    snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm & imm");			  
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  op->size = 5;
- 			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r & r");			  
-            }
-          }
-        }
-		break; 
-      case 10:
-		p = buf + 1;
-		if ( *p == 1 ) {
-		  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r | imm");			  
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 8;
-   			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm | r");			  
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 11;
-				snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm | imm");			  
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  op->size = 5;
-   			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r | r");			  
-            }
-          }
-        }
-		break; 
-      case 12:
-		p = buf + 1;
-		if ( *p == 1 ) {
-		  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r << imm");			  
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 8;
-  			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm << r");			  
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 11;
-  			    snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm << imm");
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  op->size = 5;
-  			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r << r");
-            }
-          }
-        }
-		break; 
-      case 13:
-		p = buf + 1;
-		if ( *p == 1 ) {		  
-		  op->size = 8;
-		  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r >> imm");
-
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 8;
-			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm >> r");
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 11;
-	            snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=imm >> imm");
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  op->size = 5;
-	          snprintf (op->buf_asm, R_ASM_BUFSIZE, "r=r >> r");
-            }
-          }
-        }
-		break;
-      case 22:
-        p = buf + 1;
-		if ( *p == 1 ) {
-		  op->size = 7;
-		  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r and imm");
-        }
-        else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  op->size = 7;
- 		     snprintf (op->buf_asm, R_ASM_BUFSIZE, "imm and r");
-			}
-            else {
-              if ( *p == 4 ) {
-			    op->size = 10;
-   		        snprintf (op->buf_asm, R_ASM_BUFSIZE, "imm and imm");
-              }
-            }
-          }
-          else {
-            if ( !*p ) {
-			  op->size = 4;
-			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "r and r");
-            }
-          }
-        }
-        break;
-      case 23:
-        p = buf + 1;
-        if ( *p == 1 ) {
- 			op->size = 7;
-     		snprintf (op->buf_asm, R_ASM_BUFSIZE, "cmp r,imm");
-        }
-        else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {			  
-			  op->size = 7;
-       		  snprintf (op->buf_asm, R_ASM_BUFSIZE, "cmp imm,r");
-            }
-            else {
-              if ( *p == 4 ) {
-			    op->size = 10;
-        		snprintf (op->buf_asm, R_ASM_BUFSIZE, "cmp imm,imm");
-              }
-            }
-          }
-          else {
-            if ( !*p ) {
-			  op->size = 4;
-			  snprintf (op->buf_asm, R_ASM_BUFSIZE, "cmp r,r");
-            }
-          }
-        }
-		break;
-      case 24:
-        p = buf + 1;
-        if ( *p ) {
-          if ( *p == 1 ) {
-			op->size = 7;
-			snprintf (op->buf_asm, R_ASM_BUFSIZE, "mov r,imm");
-          }
-        }
-        else {
-			op->size = 4;
-     		snprintf (op->buf_asm, R_ASM_BUFSIZE, "mov r,r");
-        }
-		break;
-	  case 30:
-        p = buf + 1;
-        if (*p) {
-		  op->size = 6;
-		  snprintf (op->buf_asm, R_ASM_BUFSIZE, "push imm");
-        }
-        else {
-		  op->size = 3;
-		  snprintf (op->buf_asm, R_ASM_BUFSIZE,"push r");
-        }
-		break;
-	  
-      case 15:
-		op->size = 5;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "call");
-		break;
-      case 14:
-		op->size = 5;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "jmp");
-		break;
-      case 16:
-		op->size = 5;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "jz");
-		break;
-      case 17:
-		op->size = 5;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "js");
-		break;
-      case 18:
-		op->size = 5;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "jbe");
-		break;
-      case 19:
-		op->size = 5;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "jg");
-		break;
-      case 20:
-		op->size = 5;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "jns");
-		break;
-      case 21:
-		op->size = 5;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "jnz");
-		break;
-	  case 11:
-		op->size = 3;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "ins 11");
-		break;	
-      case 7:
-		op->size = 3;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE,"ins 7");
-		break;
-      case 8:
-		op->size = 3;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "ins 8");
-		break;
-      case 27:
-		op->size = 3;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "mov r,[r]");
-		break;
-      case 28://0x1c
-		op->size = 3;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "mov r,r");
-		break;
-
-	  case 25:
-		op->size = 2;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "++reg_02x");
-		break;
-      case 26:
-		op->size = 2;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "--reg_02x");
-		break;
-     case 31:
-		op->size = 2;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "pop r" );
-		break;
-      case 32:
-		op->size = 2;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "apicall");
-		break;
-      case 1:
-		op->size = 1;
-        snprintf (op->buf_asm, R_ASM_BUFSIZE, "ret");			  							  
-		break;
-      case 0:
-		op->size = 1;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "nop");			  							  
-		break;
-	  default:
-		op->size = 1;
-		snprintf (op->buf_asm, R_ASM_BUFSIZE, "nop");
-		break;*/

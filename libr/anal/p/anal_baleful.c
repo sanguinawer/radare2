@@ -12,6 +12,7 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 	const ut8  *r0;
 	const ut8  *r1;
 	const ut8  *r2;
+	const ut8  *r3;
 	const ut32 *imm;
 	const ut32 *imm1;
 	

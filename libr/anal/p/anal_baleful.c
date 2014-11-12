@@ -22,43 +22,38 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 		r0  = buf + 2;
 		switch(*c) {
 		case 1:
-			/*r1  = buf + 3;
+			r1  = buf + 3;
 			imm = buf + 4;
 			r_strbuf_setf(b,  "r_%02x = r_%02x %s 0x%04x",*r0,*r1,oper,*imm);
-			*/
-			r_strbuf_setf(b,  "%s",oper);
+			//r_strbuf_setf(b,  "%s",oper);
 			size=8;
 			break;
 		case 2:
-			/*imm  = buf + 3;
+			imm  = buf + 3;
 			r1   = buf + 4;
 			r_strbuf_setf(b,  "r_%02x = 0x%04x %s r_%02x",*r0,*imm,oper,*r1);		
-			*/
-			r_strbuf_setf(b,  "%s",oper);
+			//r_strbuf_setf(b,  "%s",oper);
 			size=8;
 			break;
 		case 4:
-			/*imm  = buf + 3;
+			imm  = buf + 3;
 			imm1 = buf + 7;
 			r_strbuf_setf(b,  "r_%02x = 0x%04x %s 0x%04x",*r0,*imm,oper,*imm1);	
-			*/
-			r_strbuf_setf(b,  "%s",oper);
+			//r_strbuf_setf(b,  "%s",oper);
 			size=11;
 			break;
 		case 0:
-			/*r1  = buf + 3;
+			r1  = buf + 3;
 			r2  = buf + 4;
 			r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);	
-			*/
-			r_strbuf_setf(b,  "%s",oper);
+			//r_strbuf_setf(b,  "%s",oper);
 			size=5;
 			break;
 		default:
-			/*r1  = buf + 3;
+			r1  = buf + 3;
 			r2  = buf + 4;
 			r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);		
-			*/
-			r_strbuf_setf(b,  "%s",oper);
+			//r_strbuf_setf(b,  "%s",oper);
 			size=5;
 			break;
 		}

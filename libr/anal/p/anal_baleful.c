@@ -147,21 +147,27 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 	case 3:// 7 4
 		switch(*c) {
 		case 1:
-			r1  = buf + 2;
+			/*r1  = buf + 2;
 			imm = buf + 3;
 			r_strbuf_setf(b,  "%s r_%02x,0x%04x",oper,*r1,*imm);
+			*/
+			r_strbuf_setf(b,  "%s",oper);
 			size=7;
 			break;
 		case 0:
-			r0  = buf + 2;
+			/*r0  = buf + 2;
 			r1 = buf + 3;
 			r_strbuf_setf(b,  "%s r_%02x,r_%02x",oper,*r1,*r2);
+			*/
+			r_strbuf_setf(b,  "%s",oper);
 			size=4;
 			break;
 		default:
-			r0  = buf + 2;
+			/*r0  = buf + 2;
 			r1 = buf + 3;
 			r_strbuf_setf(b,  "%s r_%02x,r_%02x",oper,*r1,*r2);
+			*/
+			r_strbuf_setf(b,  "%s",oper);
 			size=4;
 			break;
 		}

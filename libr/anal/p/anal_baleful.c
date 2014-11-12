@@ -16,7 +16,7 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 	const ut32 *imm1;
 	
 	int size=0;
-	c   = buf  +1;
+	c   = buf+1;
 	switch(type) {
 	case 0: // 8 8 11 5
 		r0  = buf + 2;
@@ -161,7 +161,6 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 			size=4;
 			break;
 		}
-
 		break;
 	case 4: // 6 3
 		switch(*c) {
@@ -183,7 +182,8 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 			//r_strbuf_setf(b,  "%s",oper);
 			size=3;
 			break;
-		}		
+		}
+		break;
 	case 5: //5
 		imm  = buf + 1;
 		r_strbuf_setf(b, "%s 0x%04x",oper,*imm);			  							

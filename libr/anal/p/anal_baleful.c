@@ -272,7 +272,7 @@ static int baleful_op(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buf, int l
 		op->type = R_ANAL_OP_TYPE_CJMP;
 		op->size = anal_baleful_getregs(buf,&op->esil,"jz",5);
 		break;
-      case 17 //5:
+	  case 17: //5
 		op->type = R_ANAL_OP_TYPE_CJMP;		
 		op->size = anal_baleful_getregs(buf,&op->esil,"js",5);
 		break;

@@ -113,7 +113,7 @@ int asm_baleful_getregs(const ut8 *buf,ut8 * b,char * oper,int type) {
 			break;
 		default:
 			snprintf(b, 64, "%s reg",oper);			  							
-			size=4;
+			size=3;
 			break;
 		}
 		break;

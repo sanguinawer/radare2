@@ -7,7 +7,7 @@
 #include <r_anal.h>
 
 static unsigned char strbuffer[64];
-int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper) {
+int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 	const ut8 * c;
 	const ut8  *r0;
 	const ut8  *r1;
@@ -17,43 +17,164 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper) {
 	
 	int size=0;
 	c   = buf  +1;
-	r0  = buf + 2;
-	switch(*c) {
-	case 1:
-		r1  = buf + 3;
-		imm = buf + 4;
-        //snprintf(b, 64, "r_%02x = r_%02x %s 0x%04x",*r0,*r1,oper,*imm);		  							
-		r_strbuf_setf(b,  "r_%02x = r_%02x %s 0x%04x",*r0,*r1,oper,*imm);
-		size=8;
+	switch(type) {
+	case 0: // 8 8 11 5
+		r0  = buf + 2;
+		switch(*c) {
+		case 1:
+			r1  = buf + 3;
+			imm = buf + 4;
+			r_strbuf_setf(b,  "r_%02x = r_%02x %s 0x%04x",*r0,*r1,oper,*imm);
+			size=8;
+			break;
+		case 2:
+			imm  = buf + 3;
+			r1   = buf + 4;
+			r_strbuf_setf(b,  "r_%02x = 0x%04x %s r_%02x",*r0,*imm,oper,*r1);		
+			size=8;
+			break;
+		case 4:
+			imm  = buf + 3;
+			imm1 = buf + 7;
+			r_strbuf_setf(b,  "r_%02x = 0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
+			size=11;
+			break;
+		case 0:
+			r1  = buf + 3;
+			r2  = buf + 4;
+			r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);	
+			size=5;
+			break;
+		default:
+			r1  = buf + 3;
+			r2  = buf + 4;
+			r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);		
+			size=5;
+			break;
+		}
 		break;
-	case 2:
-		imm  = buf + 3;
-		r1   = buf + 4;
-        //snprintf(b, 64, "r_%02x = 0x%04x %s r_%02x",*r0,*imm,oper,*r1);		
-		r_strbuf_setf(b,  "r_%02x = 0x%04x %s r_%02x",*r0,*imm,oper,*r1);		
-		size=8;
+	case 1: // 9 9 12 6
+		r0  = buf + 2;
+		r3  = buf +3; // guarda aki el resto
+		switch(*c) {
+		case 1:
+			r1  = buf + 4;
+			imm = buf + 5;
+			r_strbuf_setf(b,  "r_%02x = r_%02x %s 0x%04x",*r0,*r1,oper,*imm);
+			size=9;
+			break;
+		case 2:
+			imm  = buf + 4;
+			r1   = buf + 5;
+			r_strbuf_setf(b,  "r_%02x = 0x%04x %s r_%02x",*r0,*imm,oper,*r1);		
+			size=9;
+			break;
+		case 4:
+			imm  = buf + 4;
+			imm1 = buf + 8;
+			r_strbuf_setf(b,  "r_%02x = 0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
+			size=12;
+			break;
+		case 0:
+			r1  = buf + 4;
+			r2  = buf + 5;
+			r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);	
+			size=6;
+			break;
+		default:
+			r1  = buf + 4;
+			r2  = buf + 5;
+			r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);		
+			size=6;
+			break;
+		}		
 		break;
-	case 4:
-		imm  = buf + 3;
-		imm1 = buf + 7;
-		//snprintf(b, 64, "r_%02x = 0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
-		r_strbuf_setf(b,  "r_%02x = 0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
-		size=11;
+	case 2: // 7 7 10 4
+		switch(*c) {
+		case 1:
+			r1  = buf + 2;
+			imm = buf + 3;
+			r_strbuf_setf(b,  "r_%02x %s 0x%04x",*r0,*r1,oper,*imm);
+			size=7;
+			break;
+		case 2:
+			imm  = buf + 2;
+			r1   = buf + 6;
+			r_strbuf_setf(b,  "0x%04x %s r_%02x",*r0,*imm,oper,*r1);		
+			size=7;
+			break;
+		case 4:
+			imm  = buf + 2;
+			imm1 = buf + 6;
+			r_strbuf_setf(b,  "0x%04x %s 0x%04x",oper,*r0,*imm,oper,*imm1);	
+			size=10;
+			break;
+		case 0:
+			r1  = buf + 2;
+			r2  = buf + 3;
+			r_strbuf_setf(b,  "r_%02x %s r_%02x",*r0,*r1,oper,*r2);	
+			size=4;
+			break;
+		default:
+			r1  = buf + 2;
+			r2  = buf + 3;
+			r_strbuf_setf(b,  "r_%02x %s r_%02x",*r0,*r1,oper,*r2);		
+			size=4;
+			break;
+		}	
 		break;
-	case 0:
-	    r1  = buf + 3;
-		r2  = buf + 4;
-		//snprintf(b, 64, "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);	
-		r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);	
-		size=5;
+	case 3:// 7 4
+		switch(*c) {
+		case 1:
+			r1  = buf + 2;
+			imm = buf + 3;
+			r_strbuf_setf(b,  "%s r_%02x,0x%04x",oper,*r1,*imm);
+			size=7;
+			break;
+		case 0:
+			r0  = buf + 2;
+			r1 = buf + 3;
+			r_strbuf_setf(b,  "%s r_%02x,r_%02x",oper,*r1,*r2);
+			size=4;
+			break;
+		default:
+			r0  = buf + 2;
+			r1 = buf + 3;
+			r_strbuf_setf(b,  "%s r_%02x,r_%02x",oper,*r1,*r2);
+			size=4;
+			break;
+		}
+
 		break;
-	default:
-	    r1  = buf + 3;
-		r2  = buf + 4;
-		//snprintf(b, 64, "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);		
-		r_strbuf_setf(b,  "r_%02x = r_%02x %s r_%02x",*r0,*r1,oper,*r2);		
-		size=5;
+	case 4: // 6 3
+		switch(*c) {
+		case 1:
+			imm = buf + 2;
+			r_strbuf_setf(b, "%s 0x%04x",oper,*imm);			  							
+			size=6;
+			break;
+		case 0:
+			r0  = buf + 2;
+			r_strbuf_setf(b, "%s r_%02x",oper,*r0);			  							
+			size=3;
+			break;
+		default:
+			r0  = buf + 2;
+			r_strbuf_setf(b, "%s r_%02x",oper,*r0);			  							
+			size=3;
+			break;
+		}		
+	case 5: //5
+		imm  = buf + 2;
+		snprintf(b, 64, "%s 0x%04x",*imm);			  							
+		size=5;		
 		break;
+	case 6://2
+		r0  = buf + 2;
+		snprintf(b, 64, "%s r_%02x",*r0);			  							
+		size=2;		
+		break;
+	break;
 	}
 	return size;
 }
@@ -84,196 +205,94 @@ static int baleful_op(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buf, int l
 	//op->size = 1;
 
 	switch (buf[0]) {
-      case 2:
+      case 2: // 8 8 11 5
         op->type = R_ANAL_OP_TYPE_ADD;
-    	op->size = anal_baleful_getregs(buf,&op->esil,"+");
-		//r_strbuf_setf (&op->esil, "%s",strbuffer);
+    	op->size = anal_baleful_getregs(buf,&op->esil,"+",0);
 		break;     
-      case 4:
+	  case 3: // 8 8 11 5
+        op->type = R_ANAL_OP_TYPE_SUB;
+    	op->size = anal_baleful_getregs(buf,&op->esil,"-",0);
+		break;     
+      case 4: // 8 8 11 5
         op->type = R_ANAL_OP_TYPE_MUL;
-	   	op->size = anal_baleful_getregs(buf,&op->esil,"*");
-		//r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"*",0);
 		break;  
-      case 5: // testear
-		op->type = R_ANAL_OP_TYPE_DIV;
-	   	op->size = anal_baleful_getregs(buf,&op->esil,"/");
-		//r_strbuf_setf (&op->esil, "%s",strbuffer);
-		break;
-      case 6:
+      case 6: // 8 8 11 5
 		op->type = R_ANAL_OP_TYPE_XOR;
-	   	op->size = anal_baleful_getregs(buf,&op->esil,"^");
-        //r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"^",0);
 		break; 
-      case 9:
+      case 9: // 8 8 11 5
         op->type = R_ANAL_OP_TYPE_AND;
-	   	op->size = anal_baleful_getregs(buf,&op->esil,"&");
-		//r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"&",0);
 		break; 
-      case 10:
+      case 10: // 8 8 11 5
         op->type = R_ANAL_OP_TYPE_OR;
-	   	op->size = anal_baleful_getregs(buf,&op->esil,"|");
-		//r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"|",0);
 		break; 
-      case 12:
+      case 12: // 8 8 11 5
         op->type = R_ANAL_OP_TYPE_ROL;
-	   	op->size = anal_baleful_getregs(buf,&op->esil,"<<");
-		//r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"<<",0);
 		break; 
-      case 13:
+      case 13: // 8 8 11 5
         op->type = R_ANAL_OP_TYPE_ROR;
-	   	op->size = anal_baleful_getregs(buf,&op->esil,">>");
-		//r_strbuf_setf (&op->esil, "%s",strbuffer);
+	   	op->size = anal_baleful_getregs(buf,&op->esil,">>",0);
+		break;		
+      case 5: // 9 9 12 6
+		op->type = R_ANAL_OP_TYPE_DIV;
+	   	op->size = anal_baleful_getregs(buf,&op->esil,"/",1);
 		break;
-		
-
-      case 22:
-		p = buf + 1;
+      case 22: // 7 7 10 4
 		op->type = R_ANAL_OP_TYPE_AND;
-		if ( *p == 1 ) {
-          r   = buf + 2;
-          imm = buf + 3;
-		  op->size = 7;
-		  r_strbuf_setf (&op->esil, "r_%02x and 0x%04x",*r,*imm);
-        }
-		else if ( *p == 2 ) {
-			  imm = buf + 2;
-			  r = buf + 6;
-			  op->size = 7;
-		      r_strbuf_setf (&op->esil, "0x%04x and r_%2x",*imm,*r);
-		}
-		else if ( *p == 4 ) {
-			    imm  = buf + 2;
-			    imm1 = buf + 6;
-			    op->size = 10;
-		        r_strbuf_setf (&op->esil, "0x%04x and 0x%04x",*imm,*imm1);
-        } 
-		else { /*if ( *p==0 ) {*/
-		
-			  r  = buf + 2;
-			  r1 = buf + 3;
-			  op->size = 4;
-		      r_strbuf_setf (&op->esil, "r_%02x and r_%02x",*r,*r1);
-        }
+	    op->size = anal_baleful_getregs(buf,&op->esil,"and",2);
         break;
-      case 23:
-        p = buf + 1;
+      case 23: // 7 7 10 4
 		op->type = R_ANAL_OP_TYPE_MOV;
-        if ( *p == 1 ) {
-          r = buf + 2;
-		  imm = buf + 3;
-		  op->size = 7;
-		  r_strbuf_setf (&op->esil, "cmp r_%02x,0x%04x",*r,*imm);
-        }
-        else if ( *p == 2 ) {			  
-		  imm = buf + 2;
-		  r1 = buf + 6;
-		  op->size = 7;
-	      r_strbuf_setf (&op->esil, "cmp 0x%04x,r_%02x",*imm,*r1);
-
-        }
-        else if ( *p == 4 ) {
-      	  imm = buf + 2;
-		  imm1 = buf + 6;
-		  op->size = 10;
-	      r_strbuf_setf (&op->esil, "cmp 0x%04x,0x%04x",*imm,*imm1);
-        }
-        else /*if ( !*p )*/ {
-		  r = buf + 2;
-		  r1 = buf + 3;
-		  op->size = 4;
-		  r_strbuf_setf (&op->esil, "cmp r_%02x,r_%02x",*r,*r1);
-        }
-		break;
-      case 24:
-        p = buf + 1;
+        op->size = anal_baleful_getregs(buf,&op->esil,"cmp",2);
+		break;	  
+	  case 24: //7 4
 		op->type = R_ANAL_OP_TYPE_MOV;
-        if ( *p == 1 ) {
-		    r   = buf + 2;
-			imm = buf + 3;
-			op->size = 7;
-			r_strbuf_setf (&op->esil, "mov r_%02x,0x%04x",*r,*imm);
-        }
-        else {
-		    r  = buf + 2;
-			r1 = buf + 3;
-			op->size = 4;
-			r_strbuf_setf (&op->esil, "mov r_%02x,r_%02x",*r,*r1);
-        }
+		op->size = anal_baleful_getregs(buf,&op->esil,"mov",3);
 		break;
-      case 30:
+      case 30: //6 3
         p = buf + 1;
 		op->type = R_ANAL_OP_TYPE_PUSH;
-        if (*p) {
-	   	  imm = buf + 2;
-		  op->size = 6;
-          r_strbuf_setf (&op->esil, "push 0x%04x",*imm);
-        }
-        else {
-          r = buf + 2;
-		  op->size = 3;
-          r_strbuf_setf (&op->esil, "push r_%02x",*r);
-        }
+		op->size = anal_baleful_getregs(buf,&op->esil,"push",4);
 		break;
-
-
-
-      case 15:
+      case 15: //5
 		imm = buf + 1;
 		op->type = R_ANAL_OP_TYPE_CALL;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "call 0x%04x",*imm);
-		//r_strbuf_setf (&op->esil, "call");
+		op->size = anal_baleful_getregs(buf,&op->esil,"call",5);
 		break;
-      case 14:
-		imm = buf + 1;
+      case 14: //5
 		op->type = R_ANAL_OP_TYPE_JMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jmp 0x%04x",*imm);
-		//r_strbuf_setf (&op->esil, "jmp");
+		op->size = anal_baleful_getregs(buf,&op->esil,"jmp",5);
 		break;
-      case 16:
-		imm = buf + 1;
+      case 16: //5
 		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jz 0x%04x",*imm);
-		//r_strbuf_setf (&op->esil, "jz");
+		op->size = anal_baleful_getregs(buf,&op->esil,"jz",5);
 		break;
-      case 17:
-		imm = buf + 1;
+      case 17 //5:
 		op->type = R_ANAL_OP_TYPE_CJMP;		
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "js 0x%04x",*imm);
-		//r_strbuf_setf (&op->esil, "js");
+		op->size = anal_baleful_getregs(buf,&op->esil,"js",5);
 		break;
-      case 18:
-		imm = buf + 1;
+      case 18: //5
 		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jbe 0x%04x",*imm);
-		//r_strbuf_setf (&op->esil, "jbe");
+		op->size = anal_baleful_getregs(buf,&op->esil,"jbe",5);
 		break;
-      case 19:
-		imm = buf + 1;
+      case 19: //5
 		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jg 0x%04x",*imm);
-		//r_strbuf_setf (&op->esil, "jg");
+		op->size = anal_baleful_getregs(buf,&op->esil,"jg",5);
 		break;
-      case 20:
-		imm = buf + 1;
+      case 20: //5
 		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jns 0x%04x",*imm);
-		//r_strbuf_setf (&op->esil, "jns");
+		op->size = anal_baleful_getregs(buf,&op->esil,"jns",5);
 		break;
-      case 21:
-		imm = buf + 1;
+      case 21: //5
 		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jnz 0x%04x",*imm);
-		//r_strbuf_setf (&op->esil, "jnz");
+		op->size = anal_baleful_getregs(buf,&op->esil,"jnz",5);
 		break;
-      case 27:
+
+	  case 27:
 		r  = buf + 1;
 		r1 = buf + 2;
 		op->type = R_ANAL_OP_TYPE_MOV;
@@ -286,7 +305,6 @@ static int baleful_op(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buf, int l
 		op->type = R_ANAL_OP_TYPE_MOV;
 		op->size = 3;
 		r_strbuf_setf (&op->esil, "mov [r_%02x],r_%02x",*r,*r1);
-		//r_strbuf_setf (&op->esil, "mov [r0],r1");
 		break;
       case 11:
         r_strbuf_setf (&op->esil, "regX = regY==0");
@@ -301,22 +319,17 @@ static int baleful_op(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buf, int l
 		op->size = 3;
 		break;
       case 25:
-        r = buf + 1;
 		op->type = R_ANAL_OP_TYPE_ADD;
-		op->size = 2;
-		r_strbuf_setf (&op->esil, "++reg_02x",*r);
+		op->size = anal_baleful_getregs(buf,&op->esil,"++",6);
 		break;
       case 26:
 		r = buf + 1;
 		op->type = R_ANAL_OP_TYPE_SUB;
-		op->size = 2;
-		r_strbuf_setf (&op->esil, "--reg_02x",*r);
+		op->size = anal_baleful_getregs(buf,&op->esil,"--",6);
 		break;
       case 31:
-		r = buf + 1;
 		op->type = R_ANAL_OP_TYPE_POP;
-		op->size = 2;
-		r_strbuf_setf (&op->esil, "pop r_%02x",*r);
+		op->size = anal_baleful_getregs(buf,&op->esil,"pop",6);
 		break;
       case 32:
         p = buf + 1;
@@ -388,564 +401,3 @@ struct r_lib_struct_t radare_plugin = {
 	.data = &r_anal_plugin_baleful
 };
 #endif
-
-
-
-
-/*
-	switch (buf[0]) {
-      case 2:
-		*p = buf + 1;
-		*r0 = buf + 2;
-        op->type = R_ANAL_OP_TYPE_ADD;
-		if ( *p == 1 ) {
-          r1  = buf + 3;
-		  imm = buf + 4;
-          r_strbuf_setf (&op->esil,"r_%02x=r_%02x + 0x%04x  \n",*r0,*r1,*imm);
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm  = buf + 3;
-			  r1 = buf + 7;
-			  r_strbuf_setf (&op->esil, "r_%02x=0x%04x + r_%02x",*r0,*imm,*r1);
-			  op->size = 8;
-            }
-            else {
-              if ( *p == 4 ) {
-				 imm  = buf + 3;
-			     imm1 = buf + 7;
-			    r_strbuf_setf (&op->esil, "r_%02x=0x%04x + 0x%04x",*r0,*imm,*imm1);
-			    op->size = 11;
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  r1  = buf + 3;
-			  r2 = buf + 4;
-			  r_strbuf_setf (&op->esil, "r_%02x=r_%02x + r_%02x",*r0,*r1,*r2);
-			  op->size = 5;
-            }
-          }
-        }
-		break;
-      case 3:
- 		p = buf + 1;
-		r0 = buf + 2;
-        op->type = R_ANAL_OP_TYPE_SUB;
-		if ( *p == 1 ) {
-          r1  = buf + 3;
-		  imm = buf + 4;
-          r_strbuf_setf (&op->esil, "r_%02x=r_%02x - 0x%04x  \n",*r0,*r1,*imm);
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm  = buf + 3;//v16_1
-			  r1 = buf + 7;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=0x%04x - r_%02x",*r0,*imm,*r1);
-			  op->size = 8;
-            }
-            else {
-              if ( *p == 4 ) {
-				imm  = buf + 3;//v16_1
-			    imm1 = buf + 7;//v16_2
-			    r_strbuf_setf (&op->esil, "r_%02x=0x%04x - 0x%04x",*r0,*imm,*imm1);
-			    op->size = 11;
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  r1  = buf + 3;//v16_1
-			  r2 = buf + 4;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=r_%02x - r_%02x",*r0,*r1,r2);
-			  op->size = 5;
-            }
-          }
-        }
-		break;     
-      case 4:
- 		p = buf + 1;
-		r0 = buf + 2;//v15
-        op->type = R_ANAL_OP_TYPE_MUL;
-		if ( *p == 1 ) {
-          r1  = buf + 3;//v16_1
-		  imm = buf + 4;//v16_2
-          r_strbuf_setf (&op->esil, "r_%02x=r_%02x * 0x%04x  \n",*r0,*r1,*imm);
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm  = buf + 3;//v16_1
-			  r1 = buf + 7;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=0x%04x * r_%02x",*r0,*imm,*r1);
-			  op->size = 8;
-
-            }
-            else {
-              if ( *p == 4 ) {
-				imm  = buf + 3;//v16_1
-			    imm1 = buf + 7;//v16_2
-			    r_strbuf_setf (&op->esil, "r_%02x=0x%04x * 0x%04x",*r0,*imm,*imm1);
-			    op->size = 11;
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  r1  = buf + 3;//v16_1
-			  r2 = buf + 4;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=r_%02x * r_%02x",*r0,*r1,*r2);
-			  op->size = 5;
-            }
-          }
-        }
-		break;  
-      case 5:
-        op->type = R_ANAL_OP_TYPE_DIV;
-		p  = buf + 1;
-		r  = buf + 2;
-		r1 = buf + 3;
-        if ( *p == 1 ) {
-		  r2  = buf + 4;
-		  imm = buf + 5;
-		  op->size = 8;
-		  r_strbuf_setf("r_%02x = r_%02x / 0x%04x (reminder at r_%02x)",*r,*r2,*imm,*r1);
-        }
-        else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm = buf + 4;
-			  r2 =  buf + 8;
-			  op->size = 8;
-			  r_strbuf_setf("r_%02x = 0x%04x / r_%02x (reminder at r_%02x)",*r,*imm,*r2,*r1);
-            }
-            else {
-              if ( *p == 4 ) {
-				imm  = buf + 4;
-			    imm1 = buf + 8;
-			    op->size = 11;
-			    r_strbuf_setf("r_%02x = 0x%04x / 0x%04x (reminder at r_%02x)",*r,*imm,*imm1,*r1);
-              }
-            }
-          }
-          else {
-            if ( !*p ) {
-			  r2 =  buf + 4;
-			  r3 =  buf + 5;
-			  op->size = 5;
-			  r_strbuf_setf("r_%02x = r_%02 / r_%02x (reminder at r_%02x)",*r,*r2,*r3,*r1);
-            }
-          }
-        }
-		break;
-      case 6:
-		p = buf + 1;
-		r0 = buf + 2;//v15
-        op->type = R_ANAL_OP_TYPE_XOR;
-		if ( *p == 1 ) {
-          r1  = buf + 3;//v16_1
-		  imm = buf + 4;//v16_2
-          r_strbuf_setf (&op->esil, "r_%02x=r_%02x ^ 0x%04x  \n",*r0,*r1,*imm);
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm  = buf + 3;//v16_1
-			  r1 = buf + 7;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=0x%04x ^ r_%02x",*r0,*imm,*r1);
-			  op->size = 8;
-            }
-            else {
-              if ( *p == 4 ) {
-				imm  = buf + 3;//v16_1
-			    imm1 = buf + 7;//v16_2
-			    r_strbuf_setf (&op->esil, "r_%02x=0x%04x ^ 0x%04x",*r0,*imm,*imm1);
-			    op->size = 11;
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  r1  = buf + 3;//v16_1
-			  r2 = buf + 4;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=r_%02x ^ r_%02x",*r0,*r1,*r2);
-			  op->size = 5;
-            }
-          }
-        }
-		break; 
-      case 9:
-		p = buf + 1;
-		r0 = buf + 2;//v15
-        op->type = R_ANAL_OP_TYPE_AND;
-		if ( *p == 1 ) {
-          r1  = buf + 3;//v16_1
-		  imm = buf + 4;//v16_2
-          r_strbuf_setf (&op->esil, "r_%02x=r_%02x & 0x%04x  \n",*r0,*r1,*imm);
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm  = buf + 3;//v16_1
-			  r1 = buf + 7;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=0x%04x & r_%02x",*r0,*imm,*r1);
-			  op->size = 8;
-
-            }
-            else {
-              if ( *p == 4 ) {
-				imm  = buf + 3;//v16_1
-			    imm1 = buf + 7;//v16_2
-			    r_strbuf_setf (&op->esil, "r_%02x=0x%04x & 0x%04x",*r0,*imm,*imm1);
-			    op->size = 11;
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  r1  = buf + 3;//v16_1
-			  r2 = buf + 4;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=r_%02x & r_%02x",*r0,*r1,*r2);
-			  op->size = 5;
-            }
-          }
-        }
-		break; 
-      case 10:
-		p = buf + 1;
-		r0 = buf + 2;//v15
-        op->type = R_ANAL_OP_TYPE_OR;
-		if ( *p == 1 ) {
-          r1  = buf + 3;//v16_1
-		  imm = buf + 4;//v16_2
-          r_strbuf_setf (&op->esil, "r_%02x=r_%02x | 0x%04x  \n",*r0,*r1,*imm);
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm  = buf + 3;//v16_1
-			  r1 = buf + 7;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=0x%04x | r_%02x",*r0,*imm,*r1);
-			  op->size = 8;
-
-            }
-            else {
-              if ( *p == 4 ) {
-				imm  = buf + 3;//v16_1
-			    imm1 = buf + 7;//v16_2
-			    r_strbuf_setf (&op->esil, "r_%02x=0x%04x | 0x%04x",*r0,*imm,*imm1);
-			    op->size = 11;
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  r1  = buf + 3;//v16_1
-			  r2 = buf + 4;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=r_%02x | r_%02x",*r0,*r1,*r2);
-			  op->size = 5;
-            }
-          }
-        }
-		break; 
-      case 12:
-		p = buf + 1;
-		r0 = buf + 2;//v15
-        op->type = R_ANAL_OP_TYPE_ROL;
-		if ( *p == 1 ) {
-          r1  = buf + 3;//v16_1
-		  imm = buf + 4;//v16_2
-          r_strbuf_setf (&op->esil, "r_%02x=r_%02x << 0x%04x  \n",*r0,*r1,*imm);
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm  = buf + 3;//v16_1
-			  r1 = buf + 7;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=0x%04x << r_%02x",*r0,*imm,*r1);
-			  op->size = 8;
-            }
-            else {
-              if ( *p == 4 ) {
-				imm  = buf + 3;//v16_1
-			    imm1 = buf + 7;//v16_2
-			    r_strbuf_setf (&op->esil, "r_%02x=0x%04x << 0x%04x",*r0,*imm,*imm1);
-			    op->size = 11;
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  r1  = buf + 3;//v16_1
-			  r2 = buf + 4;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=r_%02x << r_%02x",*r0,*r1,*r2);
-			  op->size = 5;
-            }
-          }
-        }
-		break; 
-      case 13:
-		p = buf + 1;
-		r0 = buf + 2;//v15
-        op->type = R_ANAL_OP_TYPE_ROR;
-		if ( *p == 1 ) {
-          r1  = buf + 3;//v16_1
-		  imm = buf + 4;//v16_2
-          r_strbuf_setf (&op->esil, "r_%02x=r_%02x >> 0x%04x  \n",*r0,*r1,*imm);
-		  op->size = 8;
-        } else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm  = buf + 3;//v16_1
-			  r1 = buf + 7;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=0x%04x >> r_%02x",*r0,*imm,*r1);
-			  op->size = 8;
-            }
-            else {
-              if ( *p == 4 ) {
-				imm  = buf + 3;//v16_1
-			    imm1 = buf + 7;//v16_2
-			    r_strbuf_setf (&op->esil, "r_%02x=0x%04x >> 0x%04x",*r0,*imm,*imm1);
-			    op->size = 11;
-              }
-            }
-          }
-          else {
-            if ( *p==0 ) {
-			  r1  = buf + 3;//v16_1
-			  r2 = buf + 4;//v16_2
-			  r_strbuf_setf (&op->esil, "r_%02x=r_%02x >> r_%02x",*r0,*r1,*r2);
-			  op->size = 5;
-            }
-          }
-        }
-		break;
-      case 22:
-        p = buf + 1;
-		op->type = R_ANAL_OP_TYPE_AND;
-		if ( *p == 1 ) {
-          r   = buf + 2;
-          imm = buf + 3;
-		  op->size = 7;
-		  r_strbuf_setf (&op->esil, "r_%02x and 0x%04x,",*r,*imm);
-        }
-        else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {
-			  imm = buf + 2;
-			  r = buf + 6;
-			  op->size = 7;
-		      r_strbuf_setf (&op->esil, "0x%04x and r_%2x,",*imm,*r);
-			}
-            else {
-              if ( *p == 4 ) {
-			    imm  = buf + 2;
-			    imm1 = buf + 6;
-			    op->size = 10;
-		        r_strbuf_setf (&op->esil, "0x%04x and 0x%04x,",*imm,*imm1);
-              }
-            }
-          }
-          else {
-            if ( !*p ) {
-			  r  = buf + 2;
-			  r1 = buf + 6;
-			  op->size = 4;
-		      r_strbuf_setf (&op->esil, "r_%2x and r_%02x,",*r,*r1);
-            }
-          }
-        }
-        break;
-		// v1 and v2
-		//v14 = v16_1 & v16_2;
-        //goto NextInstruction;
-      case 23:
-        p = buf + 1;
-		op->type = R_ANAL_OP_TYPE_MOV;
-        if ( *p == 1 ) {
-          r = buf + 2;
-		  imm = buf + 3;
-		  op->size = 7;
-		  r_strbuf_setf (&op->esil, "cmp r_%02x,0x%04x",*r,*imm);
-        }
-        else {
-          if ( *p > 1 ) {
-            if ( *p == 2 ) {			  
-			  imm = buf + 2;
-			  r1 = buf + 6;
-			  op->size = 7;
-		      r_strbuf_setf (&op->esil, "cmp 0x%04x,r_%02x",*imm,*r1);
-
-            }
-            else {
-              if ( *p == 4 ) {
-         	    imm = buf + 2;
-			    imm1 = buf + 6;
-			    op->size = 10;
-		        r_strbuf_setf (&op->esil, "cmp 0x%04x,0x%04x",*imm,*imm1);
-              }
-            }
-          }
-          else {
-            if ( !*p ) {
-			  r = buf + 2;
-			  r1 = buf + 3;
-			  op->size = 4;
-			  r_strbuf_setf (&op->esil, "cmp r_%02x,r_%02x",*r,*r1);
-            }
-          }
-        }
-		break;
-      case 24:
-        p = buf + 1;
-		op->type = R_ANAL_OP_TYPE_MOV;
-        if ( *p ) {
-          if ( *p == 1 ) {
-		    r  = buf + 2;
-			imm = buf + 3;
-			op->size = 7;
-			r_strbuf_setf (&op->esil, "mov r_%02x,0x%04x",*r,*imm);
-          }
-        }
-        else {
-		    r = buf + 2;
-			r1 = buf + 3;
-			op->size = 4;
-			r_strbuf_setf (&op->esil, "mov r_%02x,r_%02x",*r,*r1);
-        }
-		break;
-      case 30:
-        p = buf + 1;
-		op->type = R_ANAL_OP_TYPE_PUSH;
-        if (*p) {
-	   	  imm = buf + 2;
-		  op->size = 6;
-          r_strbuf_setf (&op->esil, "push 0x%04x",*imm);
-        }
-        else {
-          r = buf + 2;
-		  op->size = 3;
-          r_strbuf_setf (&op->esil, "push r_%02x",*r);
-        }
-		break;
-      case 15:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_CALL;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "call 0x%04x",*r);
-		break;
-      case 14:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_JMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jmp 0x%04x",*r);
-		break;
-      case 16:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jz 0x%04x",*r);
-		break;
-      case 17:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_CJMP;		
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "js 0x%04x",*r);
-		break;
-      case 18:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jbe 0x%04x",*r);
-		break;
-      case 19:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jg 0x%04x",*r);
-		break;
-      case 20:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jns 0x%04x",*r);
-		break;
-      case 21:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_CJMP;
-		op->size = 5;
-		r_strbuf_setf (&op->esil, "jnz 0x%04x",*r);
-		break;
-      case 27:
-		r  = buf + 1;
-		r1 = buf + 2;
-		op->type = R_ANAL_OP_TYPE_MOV;
-		op->size = 3;
-		r_strbuf_setf (&op->esil, "mov r_%02x,[r_%02x]",*r,*r1);
-		break;
-      case 28://0x1c
-		r  = buf + 1;
-		r1 = buf + 2;
-		op->type = R_ANAL_OP_TYPE_MOV;
-		op->size = 3;
-		r_strbuf_setf (&op->esil, "mov [r_%02x],r_%02x",*r,*r1);
-		break;
-      case 11:
-        r_strbuf_setf (&op->esil, " ins 11");
-		op->size = 3;
-		break;	
-      case 7:
-        r_strbuf_setf (&op->esil, " ins 7");
-		op->size = 3;
-		break;
-      case 8:
-		r_strbuf_setf (&op->esil, " ins 8");
-		op->size = 3;
-		break;
-      case 25:
-        r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_ADD;
-		op->size = 2;
-		r_strbuf_setf (&op->esil, "++reg_02x",*r);
-		break;
-      case 26:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_SUB;
-		op->size = 2;
-		r_strbuf_setf (&op->esil, "--reg_02x",*r);
-		break;
-      case 31:
-		r = buf + 1;
-		op->type = R_ANAL_OP_TYPE_POP;
-		op->size = 2;
-		r_strbuf_setf (&op->esil, "pop r_%02x",*r);
-		break;
-      case 32:
-        p = buf + 1;
-		op->type = R_ANAL_OP_TYPE_CALL;
-		op->size = 2;
-		if (*p==0)
-			r_strbuf_setf (&op->esil, "apicall: putchar()");
-		else
-			r_strbuf_setf (&op->esil, "apicall: %02x",*p);
-		break;
-      case 1:
-        op->type = R_ANAL_OP_TYPE_RET;
-		op->size = 1;
-		r_strbuf_setf (&op->esil, "ret");
-		break;
-	  case 0:
-        op->type = R_ANAL_OP_TYPE_NOP;
-		op->size = 1;
-		r_strbuf_setf (&op->esil, "nop");
-		break;
-      default:
-		op->type = R_ANAL_OP_TYPE_NOP;
-		op->size = 1;
-		r_strbuf_setf (&op->esil, "nop");
-		break;
-	}
-*/

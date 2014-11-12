@@ -200,6 +200,7 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 	}
 	return size;
 }
+
 static int baleful_op(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buf, int len) {
 	const ut8  *r   = 0;
 	const ut8  *r0  = 0;
@@ -208,9 +209,6 @@ static int baleful_op(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buf, int l
 	const ut32 *imm = 0;
 	const ut32 *imm1 = 0;
 
-    p = buf;
-    r0 = buf+1;
-	eprintf("%08x Baleful_op %i %i %i %i %i %i %i %i %i %i\n",buf,buf[0],buf[1],buf[2],buf[3],buf[4],buf[5],buf[6],buf[7],buf[8],buf[9]);//*p,*r0);
 	if (op == NULL)
 		return 1;
 	memset (op, 0, sizeof (RAnalOp));
@@ -221,7 +219,6 @@ static int baleful_op(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buf, int l
 	op->ptr = op->val = -1;
 	op->refptr = 0;
 	r_strbuf_init (&op->esil);
-	
 	//memset (op, 0, sizeof (RAnalOp));
 	//r_strbuf_init (&op->esil);
 	//op->size = 1;

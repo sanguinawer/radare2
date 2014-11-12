@@ -124,7 +124,6 @@ int asm_baleful_getregs(const ut8 *buf,ut8 * b,char * oper,int type) {
 		snprintf(b, 64, "%s reg",oper);			  							
 		size=2;
 		break;
-
 	}
 	return size;
 }
@@ -161,12 +160,9 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
       case 13://8 8 11 5
 		op->size = asm_baleful_getregs(buf,op->buf_asm,">>",0);
 		break;
-
       case 5: // //9 9 12 6
 		op->size = asm_baleful_getregs(buf,op->buf_asm,"/",1);
 		break;
-
-
       case 22: // 7 7 10 4
 		op->size = asm_baleful_getregs(buf,op->buf_asm,"and",2);
 		break;
@@ -203,12 +199,11 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
       case 21: //5
 		op->size = asm_baleful_getregs(buf,op->buf_asm,"jnz",5);
 		break;
-
       case 27: //3
 		op->size = 3;
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "mov reg,[reg]");
 		break;
-      case 28: //3                                                  //0x1c
+      case 28: //3                                                  
 		op->size = 3;
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "mov [reg],reg");
 		break;
@@ -224,20 +219,18 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 		op->size = 3;
 		snprintf (op->buf_asm, R_ASM_BUFSIZE, "regX= NOT regY");
 		break;
-
 	  case 25: //2
 		op->size = asm_baleful_getregs(buf,op->buf_asm,"++",6);
 		break;
       case 26: //2
 		op->size = asm_baleful_getregs(buf,op->buf_asm,"--",6);
 		break;
-     case 31: //2
+      case 31: //2
 		op->size = asm_baleful_getregs(buf,op->buf_asm,"pop",6);
 		break;
       case 32: // 2
         op->size = asm_baleful_getregs(buf,op->buf_asm,"apicall",6);
 		break;
-
 	  case 1:
 		op->size = 1;
         strcpy (op->buf_asm, "ret");			  							  
@@ -246,7 +239,7 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 		op->size = 1;
 		strcpy (op->buf_asm, "nop");			  							  
 		break;
-	   case 29:
+	  case 29:
 		op->size = 1;
 		strcpy (op->buf_asm, "end virtual");
 		break;

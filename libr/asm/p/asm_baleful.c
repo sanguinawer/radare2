@@ -6,7 +6,6 @@
 #include <r_lib.h>
 #include <r_asm.h>
 
-static unsigned char strbuffer[64];
 int asm_baleful_getregs(const ut8 *buf,ut8 * b,char * oper,int type) {
 	const ut8 * c;
 	int size=0;

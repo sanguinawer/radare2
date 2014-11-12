@@ -6,7 +6,6 @@
 #include <r_asm.h>
 #include <r_anal.h>
 
-static unsigned char strbuffer[64];
 int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 	const ut8 * c;
 	const ut8  *r0;
@@ -208,17 +207,15 @@ int anal_baleful_getregs(const ut8 *buf,RStrBuf * b,char * oper,int type) {
 			break;
 		}		
 	case 5: //5
-		/*imm  = buf + 2;
+		imm  = buf + 2;
 		snprintf(b, 64, "%s 0x%04x",oper,*imm);			  							
-		*/
-	    r_strbuf_setf(b,  "%s",oper);
+	    //r_strbuf_setf(b,  "%s",oper);
 		size=5;		
 		break;
 	case 6://2
-		/*r0  = buf + 2;
+		r0  = buf + 2;
 		snprintf(b, 64, "%s r_%02x",oper,*r0);			  							
-		*/
-	    r_strbuf_setf(b,  "%s",oper);
+	    //r_strbuf_setf(b,  "%s",oper);
 		size=2;		
 		break;
 	break;

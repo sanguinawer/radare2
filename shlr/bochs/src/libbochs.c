@@ -107,8 +107,7 @@ bool bochs_wait(libbochs_t *b) {
 			b->punteroBuffer +=n;
 		}
 		if (n && strstr (&b->data[0], "<bochs:")) { 
-			//eprintf("SALIENDO\n");
-			//eprintf("%s", &b->data[0]);
+			//eprintf("Respuesta wait:\n%s\n", &b->data[0]);
 			break;
 		}
 	}	
@@ -131,7 +130,6 @@ void bochs_send_cmd(libbochs_t* b, const char * comando, bool bWait) {
 	bochs_reset_buffer(b);
 	memset(cmdBuff, 0, 128);
 	sizeSend = sprintf(cmdBuff,"%s\n",comando);
-	//eprintf("bochs_send_cmd: %s\n",cmdBuff);
 	write(b->hWritePipeOut, cmdBuff, strlen(cmdBuff));
 	if (bWait)
 		bochs_wait(b);
@@ -140,29 +138,29 @@ void bochs_send_cmd(libbochs_t* b, const char * comando, bool bWait) {
 
 int bochs_read(libbochs_t* b, ut64 addr, int count, ut8 * buf) {
 	char buff[128];
+	char * data;
 	int lenRec = 0,i = 0,ini = 0, fin = 0, pbuf = 0, totalread = 0;
 	totalread = (count >SIZE_BUF / 3)?  SIZE_BUF / 3: count;
-
 	snprintf(buff, sizeof (buff), "xp /%imb 0x%016"PFMT64x"",totalread,addr);
 	bochs_send_cmd (b, buff, true);
-
-	eprintf ("bochs_read: %s\n", b->data);
-
-	lenRec = strlen (b->data);
-	if (!strncmp (b->data, "[bochs]:", 8)) {
+	data=strstr(&b->data[0],"[bochs]:");
+	lenRec = strlen (data);
+	if (!strncmp (data, "[bochs]:", 8)) {
 		i += 10; // nos sitiamos en la siguiente linea.
 		do {
-			while (b->data[i] != 0 && b->data[i] != ':' && i < lenRec) // buscamos los :
+			while (data[i] != 0 && data[i] != ':' && i < lenRec) // buscamos los :
 				i++;
 			ini = ++i;
-			while (b->data[i] != 0 && b->data[i] != 0x0d && i < lenRec) // buscamos los el retorno
+			while (data[i] != 0 &&  data[i] !='\n' && i < lenRec) // buscamos los el retorno
 				i++;
 			fin = i++;
-			b->data[fin] = 0;
-			pbuf+=r_hex_str2bin(&b->data[ini],&buf[pbuf]);
-			//lprintf("%s\n", &lpBuffer[ini]);
+			data[fin] = 0;
+			if (data[i]=='<')
+				break;
+			pbuf+=r_hex_str2bin(&data[ini],&buf[pbuf]);
+			//lprintf("data: %d %d %c\n",ini,fin,data[i]);
 			i++; // siguiente linea
-		} while (b->data[i] != '<' && i < lenRec);
+		} while (data[i] != '<' && i < lenRec);
 	}
 	return 0;
 }
@@ -226,11 +224,7 @@ bool bochs_open(libbochs_t* b, const char * rutaBochs, const char * rutaConfig) 
 			lprintf ("Process created\n");
 			WaitForInputIdle (b->processInfo.hProcess, INFINITE);
 			lprintf ("Initialized input\n");
-
 			b->isRunning = true;
-			//CreateThread(NULL, 0, MyThLector_, b, 0, 0);
-			//b->ghWriteEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("WriteEvent"));
-			//CreateThread(NULL, 0, MyThEscritor_, b, 0, 0);
 			bochs_reset_buffer (b);
 			eprintf ("Waiting for bochs...\n");
 			if (bochs_wait(b)) {

@@ -26,7 +26,7 @@ static int r_debug_bochs_breakpoint (RBreakpointItem *bp, int set, void *user) {
 	char bufcmd[100];
 	ut64 a;
 	int  n,i,lenRec;
-	eprintf ("bochs_breakpoint\n");
+	//eprintf ("bochs_breakpoint\n");
 	if (!bp) return false;
 	if (set) {
 		//eprintf("[set] bochs_breakpoint %016"PFMT64x"\n",bp->addr);
@@ -79,7 +79,7 @@ static int r_debug_bochs_reg_read(RDebug *dbg, int type, ut8 *buf, int size) {
 	int i = 0, pos = 0, lenRec = 0;
 	ut64 val = 0, valRIP = 0, posRIP = 0;
 
-	eprintf ("bochs_reg_read\n");
+	//eprintf ("bochs_reg_read\n");
 	if (bCapturaRegs == true) {
 		bochs_send_cmd(desc, "regs", true);
 		//r14: 00000000_00000000 r15: 00000000_00000000
@@ -189,7 +189,7 @@ static int r_debug_bochs_reg_read(RDebug *dbg, int type, ut8 *buf, int size) {
 }
 
 static int r_debug_bochs_reg_write(RDebug *dbg, int type, const ut8 *buf, int size) {
-	eprintf("bochs_reg_write\n");
+	//eprintf("bochs_reg_write\n");
 	return -1;
 }
 void map_free(RDebugMap *map) {
@@ -199,7 +199,7 @@ void map_free(RDebugMap *map) {
 
 
 static RList *r_debug_bochs_map_get(RDebug* dbg) { //TODO
-	eprintf("bochs_map_getdebug:\n");
+	//eprintf("bochs_map_getdebug:\n");
 	RDebugMap *mr;
 	RList *list = r_list_newf((RListFree)map_free);
 	if (!list) 
@@ -216,7 +216,7 @@ static RList *r_debug_bochs_map_get(RDebug* dbg) { //TODO
 }
 
 static int r_debug_bochs_step(RDebug *dbg) {
-	eprintf ("bochs_step\n");
+	//eprintf ("bochs_step\n");
 	bochs_send_cmd (desc,"s",true);
 	bCapturaRegs = true;
 	bStep = true;
@@ -224,7 +224,7 @@ static int r_debug_bochs_step(RDebug *dbg) {
 }
 
 static int r_debug_bochs_continue(RDebug *dbg, int pid, int tid, int sig) {
-	eprintf ("bochs_continue:\n");
+	//eprintf ("bochs_continue:\n");
 	bochs_send_cmd (desc, "c", false);
 	bCapturaRegs = true;
 	bBreak = false;
@@ -243,7 +243,7 @@ static int r_debug_bochs_wait(RDebug *dbg, int pid) {
 	const char *x;
 	char *ini = 0, *fin = 0;
 
-	eprintf ("bochs_wait:\n");
+	//eprintf ("bochs_wait:\n");
 
 	if (bStep) {
 		bStep = false;
@@ -270,7 +270,7 @@ static int r_debug_bochs_wait(RDebug *dbg, int pid) {
 			}
 		} while(1);
 	}
-	eprintf ("bochs_wait: loop done\n");
+	//eprintf ("bochs_wait: loop done\n");
 	i = 0;
 	// Next at t=394241428
 	// (0) [0x000000337635] 0020:0000000000337635 (unk. ctxt): add eax, esi              ; 03c6	
@@ -292,7 +292,7 @@ static int r_debug_bochs_wait(RDebug *dbg, int pid) {
 }
 
 static int r_debug_bochs_stop(RDebug *dbg) {
-	eprintf("bochs_stop:\n");
+	//eprintf("bochs_stop:\n");
 	//RIOBdescbg *o = dbg->iob.io->desc->data;
 	//BfvmCPU *c = o->bfvm;
 	//c->breaked = true;
@@ -302,7 +302,7 @@ static int r_debug_bochs_stop(RDebug *dbg) {
 
 static int r_debug_bochs_attach(RDebug *dbg, int pid) {
 	RIODesc *d = dbg->iob.io->desc;
-	eprintf ("bochs_attach:\n");
+	//eprintf ("bochs_attach:\n");
 	dbg->swstep = false;
 	if (d && d->plugin && d->plugin->name && d->data) {
 		if (!strcmp ("bochs", d->plugin->name)) {
@@ -322,7 +322,7 @@ static int r_debug_bochs_attach(RDebug *dbg, int pid) {
 }
 
 static int r_debug_bochs_detach(RDebug *dbg, int pid) {
-	eprintf ("bochs_detach:\n");
+	//eprintf ("bochs_detach:\n");
 	free (saveRegs);
 	return true;
 }

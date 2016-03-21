@@ -96,7 +96,24 @@ bool bochs_wait(libbochs_t *b) {
 	} while (--times);
 	return true;
 #else
-	return false;
+	int flags,n;
+	bochs_reset_buffer(b);	
+	flags = fcntl(b->hReadPipeIn,F_GETFL,0);
+	n = fcntl(b->hReadPipeIn,(flags | O_NONBLOCK));
+	while (1) {
+		n=read(b->hReadPipeIn, &b->data[b->punteroBuffer], SIZE_BUF); 
+		if (n!=0) {
+			//eprintf("leido: %d %s\n",n,&b->data[b->punteroBuffer]);
+			b->punteroBuffer +=n;
+		}
+		if (n && strstr (&b->data[0], "<bochs:")) { 
+			//eprintf("SALIENDO\n");
+			//eprintf("%s", &b->data[0]);
+			break;
+		}
+	}	
+	n = fcntl(b->hReadPipeIn,(flags | ~O_NONBLOCK));
+	return true;
 #endif
 }
 
@@ -111,7 +128,13 @@ void bochs_send_cmd(libbochs_t* b, const char * comando, bool bWait) {
 	if (bWait)
 		bochs_wait(b);
 #else
-#warning TODO bochs_send_cmd not implemented for this platform
+	bochs_reset_buffer(b);
+	memset(cmdBuff, 0, 128);
+	sizeSend = sprintf(cmdBuff,"%s\n",comando);
+	//eprintf("bochs_send_cmd: %s\n",cmdBuff);
+	write(b->hWritePipeOut, cmdBuff, strlen(cmdBuff));
+	if (bWait)
+		bochs_wait(b);
 #endif
 }
 
@@ -123,7 +146,7 @@ int bochs_read(libbochs_t* b, ut64 addr, int count, ut8 * buf) {
 	snprintf(buff, sizeof (buff), "xp /%imb 0x%016"PFMT64x"",totalread,addr);
 	bochs_send_cmd (b, buff, true);
 
-	lprintf ("%s\n", b->data);
+	eprintf ("bochs_read: %s\n", b->data);
 
 	lenRec = strlen (b->data);
 	if (!strncmp (b->data, "[bochs]:", 8)) {
@@ -161,10 +184,7 @@ void bochs_close(libbochs_t* b) {
 
 bool bochs_open(libbochs_t* b, const char * rutaBochs, const char * rutaConfig) {
 	bool result = false;
-#if __WINDOWS__
-	struct _SECURITY_ATTRIBUTES PipeAttributes;
-	char commandline[1024];
-	// alojamos el buffer de datos
+
 	b->data = malloc (SIZE_BUF);
 	if (!b->data) return false;
 	lpTmpBuffer = malloc (SIZE_BUF);
@@ -178,6 +198,10 @@ bool bochs_open(libbochs_t* b, const char * rutaBochs, const char * rutaConfig) 
 		free (lpTmpBuffer);
 		return false;
 	}
+#if __WINDOWS__
+	struct _SECURITY_ATTRIBUTES PipeAttributes;
+	char commandline[1024];
+	// alojamos el buffer de datos
 	// creamos los pipes
 	PipeAttributes.nLength = 12;
 	PipeAttributes.bInheritHandle = 1;
@@ -217,6 +241,87 @@ bool bochs_open(libbochs_t* b, const char * rutaBochs, const char * rutaConfig) 
 			}
 		}
 	}
+#else
+	#define PIPE_READ 0
+	#define PIPE_WRITE 1
+	int aStdinPipe[2];
+	int aStdoutPipe[2];
+	int nChild;
+	int nResult;
+	char *newargv[] = { rutaBochs, "-q","-f", rutaConfig, NULL };
+        char *envi[] = { "DISPLAY=:0.0", NULL };
+	if (pipe(aStdinPipe) < 0) {
+		eprintf("Error: allocating pipe for child input redirect");
+		return false;
+	}
+	if (pipe(aStdoutPipe) < 0) {
+		close(aStdinPipe[PIPE_READ]);
+		close(aStdinPipe[PIPE_WRITE]);
+		eprintf("Error: allocating pipe for child output redirect");
+		return false;
+	}
+
+	nChild = fork();
+	if (0 == nChild) {
+		// redirect stdin
+		if (dup2(aStdinPipe[PIPE_READ], STDIN_FILENO) == -1) {
+			eprintf("Error: redirecting stdin");
+			return false;
+		}
+
+		// redirect stdout
+		if (dup2(aStdoutPipe[PIPE_WRITE], STDOUT_FILENO) == -1) {
+			eprintf("Error: redirecting stdout");
+			return false;
+		}
+
+		// redirect stderr
+		if (dup2(aStdoutPipe[PIPE_WRITE], STDERR_FILENO) == -1) {
+			eprintf("Error: redirecting stderr");
+			return false;
+		}
+
+		close(aStdinPipe[PIPE_READ]);
+		close(aStdinPipe[PIPE_WRITE]);
+		close(aStdoutPipe[PIPE_READ]);
+		close(aStdoutPipe[PIPE_WRITE]); 
+		//eprintf("Execv %s\n",rutaBochs);
+		nResult = execve(rutaBochs, newargv, envi);
+	} else if (nChild > 0) {
+		close(aStdinPipe[PIPE_READ]);
+		close(aStdoutPipe[PIPE_WRITE]); 
+		
+		read(aStdoutPipe[PIPE_READ], &lpTmpBuffer, 1);
+		
+		b->hReadPipeIn  = aStdoutPipe[PIPE_READ];
+		b->hWritePipeOut= aStdinPipe[PIPE_WRITE];
+		b->isRunning = true;
+		bochs_reset_buffer (b);
+		eprintf ("Waiting for bochs...\n");
+		if (bochs_wait(b)) {
+			eprintf ("Ready.\n");
+			result = true;
+		} else {
+			bochs_close (b);
+		}
+		//while (read(aStdoutPipe[PIPE_READ], &lpTmpBuffer, 1) == 1) {
+		//	write(STDOUT_FILENO, &lpTmpBuffer, 1);
+			//eprintf("leido:%c\n",&lpTmpBuffer);
+		//}
+
+		// done with these in this example program, you would normally keep these
+		// open of course as long as you want to talk to the child
+		//close(aStdinPipe[PIPE_WRITE]);
+		//close(aStdoutPipe[PIPE_READ]);
+	} else {
+		eprintf("fallo\n");
+		// failed to create child
+		close(aStdinPipe[PIPE_READ]);
+		close(aStdinPipe[PIPE_WRITE]);
+		close(aStdoutPipe[PIPE_READ]);
+		close(aStdoutPipe[PIPE_WRITE]);
+	}
+
 #endif
 	return result;
 }

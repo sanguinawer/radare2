@@ -25,9 +25,10 @@ static RIODesc *__open(RIO *io, const char *file, int rw, int mode) {
 	char * archivoBochs;
 	char * archivoCfg;
 	int l;
-	if (!r_sandbox_enable (false)) {
-		return NULL;
-	}
+//	if (!r_sandbox_enable (false)) {
+//		eprintf("sandbox exit\n");
+//		return NULL;
+//	}
 	if (!__plugin_open (io, file, 0))
 		return NULL;
 	if (riobochs) {
@@ -43,10 +44,9 @@ static RIODesc *__open(RIO *io, const char *file, int rw, int mode) {
 
        	i = strstr (file+8, "#");
 	if (i) {
-		l = i - file + 8;
-		strncpy (archivoBochs,file+8,l<1024?l:1024);
+		l = i - file - 8;
+		strncpy (archivoBochs,file+8,l);// l<1024?l:1024);
 		archivoBochs[l]=0;
-
 		l = strlen (i+1);
 		strncpy (archivoCfg,i+1,l<1024?l:1024);
 		archivoCfg[l] = 0;

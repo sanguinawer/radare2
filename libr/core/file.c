@@ -10,6 +10,7 @@ static int r_core_file_do_load_for_debug (RCore *r, ut64 loadaddr, const char *f
 static int r_core_file_do_load_for_io_plugin (RCore *r, ut64 baseaddr, ut64 loadaddr);
 
 R_API int r_core_file_reopen(RCore *core, const char *args, int perm, int loadbin) {
+	eprintf("[*] r_core_file_reopen\n");
 	int isdebug = r_config_get_i (core->config, "cfg.debug");
 	char *path;
 	ut64 ofrom = 0, laddr = r_config_get_i (core->config, "bin.laddr");
@@ -23,6 +24,7 @@ R_API int r_core_file_reopen(RCore *core, const char *args, int perm, int loadbi
 	int newpid, ret = false;
 	ut64 origoff = core->offset;
 	if (odesc) {
+		eprintf("[*] odesc\n");
 		if (odesc->referer) {
 			ofilepath = odesc->referer;
 		} else if (odesc->uri) {
@@ -44,6 +46,7 @@ R_API int r_core_file_reopen(RCore *core, const char *args, int perm, int loadbi
 	newpid = odesc ? odesc->fd : -1;
 
 	if (isdebug) {
+		eprintf("[*] isdebug: haciendo kill.\n");
 		r_debug_kill (core->dbg, core->dbg->pid, core->dbg->tid, 9); // KILL
 		perm = 7;
 	} else {
@@ -68,20 +71,24 @@ R_API int r_core_file_reopen(RCore *core, const char *args, int perm, int loadbi
 	path = strdup (ofilepath);
 	free (obinfilepath);
 	obinfilepath = strdup (ofilepath);
-
+	eprintf("[*] path = %s\n", path);
 	file = r_core_file_open (core, path, perm, laddr);
 	if (file) {
+		eprintf("[*] file\n");
 		bool had_rbin_info = false;
 
 		ofile->map->from = ofrom;
 		if (ofile->desc) {
+			eprintf("[*] ofile->desc\n");
 			if (r_bin_file_delete (core->bin, ofile->desc->fd)) {
+				eprintf("[*] ofile->desc->fd deleted\n");
 				had_rbin_info = true;
 			}
 		}
 		r_core_file_close (core, ofile);
 		r_core_file_set_by_file (core, file);
 		if (file->desc) {
+			eprintf("[*] file->desc llamada a r_core_file_set_by_fd\n");
 			r_core_file_set_by_fd (core, file->desc->fd);
 		}
 		ofile = NULL;
@@ -91,8 +98,10 @@ R_API int r_core_file_reopen(RCore *core, const char *args, int perm, int loadbi
 			(perm&R_IO_WRITE)? "read-write": "read-only");
 
 		if (loadbin && (loadbin == 2 || had_rbin_info)) {
+			eprintf("[*] loadbin\n");
 			ut64 baddr = r_config_get_i (core->config, "bin.baddr");
 			ret = r_core_bin_load (core, obinfilepath, baddr);
+			eprintf("[*] r_core_bin_load invoked.\n");
 			if (!ret) {
 				eprintf ("Error: Failed to reload rbin for: %s", path);
 			}
@@ -114,17 +123,28 @@ R_API int r_core_file_reopen(RCore *core, const char *args, int perm, int loadbi
 		eprintf ("Cannot reopen\n");
 	}
 	if (isdebug) {
+		int newtid = newpid;
+		eprintf("[*] isdebug\n");
 		// XXX - select the right backend
 		if (core->file && core->file->desc) {
 			newpid = core->file->desc->fd;
+			eprintf("[*] newpid = %i core->io->pid = %i core->io->tid = %i \n", newpid,core->io->winpid,core->io->wintid);
+#if __WINDOWS__
+			newpid = core->io->winpid;
+			newtid = core->io->wintid;
+			r_debug_select (core->dbg, newpid, newtid);
+#endif
+			
 		}
 		//reopen and attach
 		r_core_setup_debugger (core, "native", true);
-		r_debug_select (core->dbg, newpid, newpid);
-		//
+		eprintf("[*] r_debug_select newpid=%i\n", newpid);
+		r_debug_select (core->dbg, newpid, newtid);
+
 	}
 
 	if (core->file) {
+		eprintf("[*] core->file\n");
 		RCoreFile * cf = core->file;
 		RIODesc *desc = cf ? cf->desc : NULL;
 		if (desc) {
@@ -678,6 +698,7 @@ R_API RCoreFile *r_core_file_open_many(RCore *r, const char *file, int flags, ut
 
 /* loadaddr is r2 -m (mapaddr */
 R_API RCoreFile *r_core_file_open(RCore *r, const char *file, int flags, ut64 loadaddr) {
+	eprintf("[+] r_core_file_open\n");
 	ut64 prev = r_sys_now();
 	const char *suppress_warning = r_config_get (r->config, "file.nowarn");
 	const int openmany = r_config_get_i (r->config, "file.openmany");
@@ -693,7 +714,9 @@ R_API RCoreFile *r_core_file_open(RCore *r, const char *file, int flags, ut64 lo
 		flags = 4 | 2;
 	}
 	r->io->bits = r->assembler->bits; // TODO: we need an api for this
+	eprintf("[+] llamando a r_io_open_nomap\n");
 	fd = r_io_open_nomap (r->io, file, flags, 0644);
+	eprintf("[+] fin llamando a r_io_open_nomap\n");
 	if (fd == NULL && openmany > 2) {
 		// XXX - make this an actual option somewhere?
 		fh = r_core_file_open_many (r, file, flags, loadaddr);

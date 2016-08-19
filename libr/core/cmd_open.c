@@ -238,6 +238,7 @@ static void cmd_open_map (RCore *core, const char *input) {
 }
 
 R_API void r_core_file_reopen_debug(RCore *core, const char *args) {
+	eprintf("r_core_file_reopen_debug\n");
 	RCoreFile *ofile = core->file;
 	RBinFile *bf = NULL;
 	char *binpath = NULL;

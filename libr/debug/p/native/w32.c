@@ -533,9 +533,10 @@ static int w32_dbg_wait(RDebug *dbg, int pid) {
 	int ret = R_DEBUG_REASON_UNKNOWN;
 	static int exited_already = 0;
 	/* handle debug events */
+	eprintf("[=] exited_already = %x\n",exited_already);
 	do {
 		/* do not continue when already exited but still open for examination */
-		if (exited_already) {
+		if (exited_already == pid) {
 			return -1;
 		}
 		if (WaitForDebugEvent (&de, INFINITE) == 0) {
@@ -563,7 +564,7 @@ static int w32_dbg_wait(RDebug *dbg, int pid) {
 				(int)de.u.ExitProcess.dwExitCode);
 			//debug_load();
 			next_event = 0;
-			exited_already = 1;
+			exited_already = pid;
 			ret = R_DEBUG_REASON_EXIT_PID;
 			break;
 		case CREATE_THREAD_DEBUG_EVENT:

@@ -288,6 +288,7 @@ static RDebugReasonType r_debug_native_wait (RDebug *dbg, int pid) {
 #if __WINDOWS__ && !__CYGWIN__
 	int mode = 0;
 	reason = w32_dbg_wait (dbg, pid);
+	eprintf("[=] reason = %x %i\n",reason,reason);
 	if (reason == R_DEBUG_REASON_NEW_LIB) {
 		mode = 'l';
 	} else if (reason == R_DEBUG_REASON_EXIT_LIB) {

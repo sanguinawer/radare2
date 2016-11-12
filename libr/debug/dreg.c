@@ -21,13 +21,15 @@ R_API int r_debug_reg_sync(RDebug *dbg, int type, int write) {
 	i = (type == R_REG_TYPE_ALL)? R_REG_TYPE_GPR: type;
 	do {
 		if (write) {
+			size = 0;
 			ut8 *buf = r_reg_get_bytes (dbg->reg, i, &size);
 			if (!buf || !dbg->h->reg_write (dbg, i, buf, size)) {
 				if (i == 0)
 					eprintf ("r_debug_reg: error writing "
 						"registers %d to %d\n", i, dbg->tid);
 				return false;
-			}
+			} 
+			break;// fix chungo noentiendo que demonios hace r_get_bytes si alguien me lo explica de lujo prueba rapida hacer printf del size obtenido ....	
 		} else {
 			// int bufsize = R_MAX (1024, dbg->reg->size*2); // i know. its hacky
 			int bufsize = dbg->reg->size;
@@ -243,10 +245,10 @@ R_API int r_debug_reg_set(struct r_debug_t *dbg, const char *name, ut64 num) {
 
 R_API ut64 r_debug_reg_get(RDebug *dbg, const char *name) {
 	// ignores errors
-	return r_debug_reg_get_err (dbg, name, NULL);
+	return r_debug_reg_get_err (dbg, name, NULL, NULL);
 }
 
-R_API ut64 r_debug_reg_get_err(RDebug *dbg, const char *name, int *err) {
+R_API ut64 r_debug_reg_get_err(RDebug *dbg, const char *name, int *err, utX *value) {
 	RRegItem *ri = NULL;
 	ut64 ret = 0LL;
 	int role = r_reg_get_name_idx (name);
@@ -267,7 +269,13 @@ R_API ut64 r_debug_reg_get_err(RDebug *dbg, const char *name, int *err) {
 	ri = r_reg_get (dbg->reg, name, R_REG_TYPE_ALL);
 	if (ri) {
 		r_debug_reg_sync (dbg, R_REG_TYPE_ALL, false);
-		ret = r_reg_get_value (dbg->reg, ri);
+		if (value && ri->size > 64) {
+			if (err) *err = ri->size;
+			r_reg_get_value_big (dbg->reg, ri, value);
+		}
+		else {
+		    ret = r_reg_get_value (dbg->reg, ri);
+		}
 	}
 	return ret;
 }
@@ -276,6 +284,6 @@ R_API ut64 r_debug_reg_get_err(RDebug *dbg, const char *name, int *err) {
 R_API ut64 r_debug_num_callback(RNum *userptr, const char *str, int *ok) {
 	RDebug *dbg = (RDebug *)userptr;
 	// resolve using regnu
-	return r_debug_reg_get_err (dbg, str, ok);
+	return r_debug_reg_get_err (dbg, str, ok, NULL);
 }
 

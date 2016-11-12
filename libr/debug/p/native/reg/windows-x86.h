@@ -6,17 +6,6 @@ return strdup(
 "=A1	ebx\n"
 "=A2	ecx\n"
 "=A3	edi\n"
-"drx	dr0	.32	4	0\n"
-"drx	dr1	.32	8	0\n"
-"drx	dr2	.32	12	0\n"
-"drx	dr3	.32	16	0\n"
-"drx	dr6	.32	20	0\n"
-"drx	dr7	.32	24	0\n"
-/* floating save area 4+4+4+4+4+4+4+80+4 = 112 */
-"seg	gs	.32	140	0\n"
-"seg	fs	.32	144	0\n"
-"seg	es	.32	148	0\n"
-"seg	ds	.32	152	0\n"
 "gpr	edi	.32	156	0\n"
 "gpr	esi	.32	160	0\n"
 "gpr	ebx	.32	164	0\n"
@@ -25,9 +14,13 @@ return strdup(
 "gpr	eax	.32	176	0\n"
 "gpr	ebp	.32	180	0\n"
 "gpr	eip	.32	184	0\n"
-"seg	cs	.32	188	0\n"
 "gpr	eflags	.32	192	0	c1p.a.zstido.n.rv\n" // XXX must be flg
 "gpr	esp	.32	196	0\n"
+"seg	gs	.32	140	0\n"
+"seg	fs	.32	144	0\n"
+"seg	es	.32	148	0\n"
+"seg	ds	.32	152	0\n"
+"seg	cs	.32	188	0\n"
 "seg	ss	.32	200	0\n"
 "gpr	cf	.1	.1536	0	carry\n"
 "gpr	pf	.1	.1538	0	parity\n"
@@ -38,5 +31,54 @@ return strdup(
 "gpr	if	.1	.1545	0	interrupt\n"
 "gpr	df	.1	.1546	0	direction\n"
 "gpr	of	.1	.1547	0	overflow\n"
+
+"drx	dr0	.32	4	0\n"
+"drx	dr1	.32	8	0\n"
+"drx	dr2	.32	12	0\n"
+"drx	dr3	.32	16	0\n"
+"drx	dr6	.32	20	0\n"
+"drx	dr7	.32	24	0\n"
+/* floating save area 4+4+4+4+4+4+4+80+4 = 112 */
+"fpu    ctw	.32     28	0\n"
+"fpu    stw	.32     32	0\n"
+"fpu    tag	.32     36	0\n"
+
+"fpu    ero	.32     40	0\n"
+"fpu    ers	.32     44	0\n"
+"fpu    dao	.32     48	0\n"
+"fpu    das	.32     52	0\n"
+
+
+"fpu	st0	.80	56	0\n"
+"fpu	st1	.80	66	0\n"
+"fpu	st2	.80	76	0\n"
+"fpu	st3	.80	86	0\n"
+"fpu	st4	.80	96	0\n"
+"fpu	st5	.80	106	0\n"
+"fpu	st6	.80	116	0\n"
+"fpu	st7	.64	126	0\n"
+"fpu    spare   .32     136	0\n"
+
+"mmx	mm0	.64	56	0\n"
+"mmx	mm1	.64	66	0\n"
+"mmx	mm2	.64	76	0\n"
+"mmx	mm3	.64	86	0\n"
+"mmx	mm4	.64	96	0\n"
+"mmx	mm5	.64	106	0\n"
+"mmx	mm6	.64	116	0\n"
+"mmx	mm7	.64	126	0\n"
+
+
+"xmm	xmm0	.128	364	0\n"
+"xmm	xmm1	.128	380	0\n"
+"xmm	xmm2	.128	396	0\n"
+"xmm	xmm3	.128	412	0\n"
+"xmm	xmm4	.128	428	0\n"
+"xmm	xmm5	.128	444	0\n"
+"xmm	xmm6	.128	460	0\n"
+"xmm	xmm7	.128	476	0\n"
+
+"xmm	fin	.32	712	0\n"
+
 /* +512 bytes for maximum supoprted extension extended registers */
 );

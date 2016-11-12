@@ -1779,16 +1779,26 @@ static void cmd_debug_reg(RCore *core, const char *str) {
 			return;
 		} else {
 			ut64 off;
+			utX val;
+			int err;
 			int bits = atoi (str);
 			r_debug_reg_sync (core->dbg, -1, 0); //R_REG_TYPE_GPR, false);
 			if (bits) {
 				r_debug_reg_list (core->dbg, R_REG_TYPE_GPR, bits, str[0], use_color);
 			} else {
-				off = r_debug_reg_get (core->dbg, str + 1);
-				//		r = r_reg_get (core->dbg->reg, str+1, 0);
-				//		if (!r) eprintf ("Unknown register (%s)\n", str+1);
-				r_cons_printf ("0x%08"PFMT64x"\n", off);
-				core->num->value = off;
+				off = r_debug_reg_get_err (core->dbg, str + 1, &err, &val);
+				if (!err) {
+					r_cons_printf ("0x%08"PFMT64x"\n", off);
+					core->num->value = off;
+				} else {
+					if (err == 80) {
+						r_cons_printf("0x%04x %016"PFMT64x"\n", val.v80.High, val.v80.Low);
+					} else if (err == 96 ) {
+						r_cons_printf("0x%08x %016"PFMT64x"\n", val.v96.High, val.v96.Low);
+					} else if (err == 128) {
+						r_cons_printf("0x%016"PFMT64x" %016"PFMT64x"\n", val.v128.High, val.v128.Low);
+					}
+				}
 			}
 			//r_reg_get_value (core->dbg->reg, r));
 		}

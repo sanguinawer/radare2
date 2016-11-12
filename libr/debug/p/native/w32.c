@@ -856,168 +856,190 @@ void w32_break_process (void *d) {
 	CloseHandle (process);
 	CloseHandle (lib);
 }
+static int GetAVX (HANDLE hThread, ut128 * xmm, ut128 * ymm) {
+	BOOL Success;
+	int nRegs = 0, Index = 0;
+	DWORD ContextSize = 0;
+	DWORD FeatureLength = 0;
+	ut64 FeatureMask = 0;
+	ut128 * Xmm = NULL;
+	ut128 * Ymm = NULL;
+	void * buffer = NULL;
+	PCONTEXT Context;
+	if (w32_GetEnabledXStateFeatures == (ut64 WINAPI (*) ())-1) {
+		return 0;
+	}
+	// Check for AVX extension
+	FeatureMask = w32_GetEnabledXStateFeatures();
+	if ((FeatureMask & XSTATE_MASK_AVX) == 0) {
+		return 0;
+	}
+	Success = w32_InitializeContext(NULL, CONTEXT_ALL | CONTEXT_XSTATE, NULL, &ContextSize);
+	if ((Success == TRUE) || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
+		return 0;
+	}
+	buffer = malloc(ContextSize);
+	if (buffer == NULL) {
+		return 0;
+	}
+	Success = w32_InitializeContext(buffer, CONTEXT_ALL | CONTEXT_XSTATE, &Context, &ContextSize);
+	if (Success == FALSE) {
+		free(buffer);
+		return 0;
+	}
+	Success = w32_SetXStateFeaturesMask(Context, XSTATE_MASK_AVX);
+	if (Success == FALSE) {
+		free(buffer);
+		return 0;
+	}
+	Success = GetThreadContext(hThread, Context);
+	if (Success == FALSE) {
+		free(buffer);
+		return 0;
+	}
+	Success = w32_GetXStateFeaturesMask(Context, &FeatureMask);
+	if (Success == FALSE) {
+		free(buffer);
+		return 0;
+	}
+	Xmm = (ut128 *)w32_LocateXStateFeature(Context, XSTATE_LEGACY_SSE, &FeatureLength);
 
-static void printcontext(PCONTEXT ctx)
-{
+        nRegs = FeatureLength / sizeof(*Xmm);
+	for (Index = 0; Index < nRegs; Index++) {
+		ymm[Index].High = 0;
+		xmm[Index].High = 0;
+		ymm[Index].Low = 0;
+		xmm[Index].Low = 0;
+	}
+	if (Xmm != NULL) {
+		for (Index = 0; Index < nRegs; Index++) {
+			xmm[Index].High = Xmm[Index].High;
+			xmm[Index].Low = Xmm[Index].Low;
+		}
+	}
+	if ((FeatureMask & XSTATE_MASK_AVX) != 0) {
+		// check for AVX initialization and get the pointer.
+		Ymm = (ut128 *)w32_LocateXStateFeature(Context, XSTATE_AVX, NULL);
+		for (Index = 0; Index < nRegs; Index++) {
+			ymm[Index].High = Ymm[Index].High;
+			ymm[Index].Low = Ymm[Index].Low;
+		}
+	}
+	free(buffer);
+	return nRegs;	
+	
+}
+static int w32_reg_read (RDebug *dbg, int type, ut8 *buf, int size) {
+	CONTEXT ctx __attribute__ ((aligned (16)));
 	ut128 xmm[16];
+	ut128 ymm[16];
 	ut80 st[8];
 	ut64 mm[8];
-	ut16 top;
-	int x;
-#if __MINGW64__
-	eprintf("cwd = 0x%04x  ; control   ", (ut16)ctx->FltSave.ControlWord);
-	eprintf("swd = 0x%04x  ; status\n", (ut16)ctx->FltSave.StatusWord);
-	eprintf("twd = 0x%04x ", (ut16)ctx->FltSave.TagWord);
-	eprintf("eof = 0x%08x\n", (ut32)ctx->FltSave.ErrorOffset);
-	eprintf("ese = 0x%08x\n", (ut32)ctx->FltSave.ErrorSelector);
-	eprintf("dof = 0x%08x\n", (ut32)ctx->FltSave.DataOffset);
-	eprintf("dse = 0x%08x\n", (ut32)ctx->FltSave.DataSelector);
-	eprintf("mxcsr = 0x%08x\n", (ut32)ctx->MxCsr);
-	for (x = 0; x < 8; x++) {
-		st[x].Low = ctx->FltSave.FloatRegisters[x].Low;
-		st[x].High = (ut16)ctx->FltSave.FloatRegisters[x].High;
-		eprintf("ST%i %04x %016"PFMT64x" (%lg)\n", x, st[x].High, st[x].Low, (double)(*((long double *)&st[x])));
-	}
-	top = (ctx->FltSave.StatusWord & 0x3fff) >> 11;
-	x = 0;
-	for (x = 0; x < 8; x++) {
-		mm[top++] = ctx->FltSave.FloatRegisters[x].Low;
-		if (top > 8) {
-			top = 0;
-		}
-	}
-	for (x = 0; x < 8; x++) {
-		eprintf("MM%i %I64x\n", x, mm[x]);
-	}
-	for (x = 0; x < 16; x++)
-	{
-		xmm[x].High = ctx->FltSave.XmmRegisters[x].High;
-		xmm[x].Low = ctx->FltSave.XmmRegisters[x].Low;
-		eprintf("XMM%i %016"PFMT64x" %016"PFMT64x"\n", x, xmm[x].High, xmm[x].Low);
-	}
-#else
-	eprintf("cwd = 0x%04x  ; control   ", (ut16)ctx->FloatSave.ControlWord);
-	eprintf("swd = 0x%04x  ; status\n", (ut16)ctx->FloatSave.StatusWord);
-	eprintf("twd = 0x%04x ", (ut16)ctx->FloatSave.TagWord);
-	eprintf("eof = 0x%08x\n", (ut32)ctx->FloatSave.ErrorOffset);
-	eprintf("ese = 0x%08x\n", (ut32)ctx->FloatSave.ErrorSelector);
-	eprintf("dof = 0x%08x\n", (ut32)ctx->FloatSave.DataOffset);
-	eprintf("dse = 0x%08x\n", (ut32)ctx->FloatSave.DataSelector);
-	eprintf("mxcsr = 0x%08x\n", (ut32)*(ut32 *)&ctx->ExtendedRegisters[24]);
-	for (x = 0; x < 8; x++)
-	{
-		st[x].High = (ut16) *((ut16 *)(&ctx->FloatSave.RegisterArea[x * 10] + 8));
-		st[x].Low = *((ut64 *)&ctx->FloatSave.RegisterArea[x * 10]);
-		eprintf("ST%i %04x %016"PFMT64x" (%lg)\n", x, st[x].High, st[x].Low, (double)(*((long double *)&st[x])));
-	}
-	top = (ctx->FloatSave.StatusWord & 0x3fff) >> 11;
-	for (x = 0; x < 8; x++) {
-		mm[top++] = *((ut64 *)&ctx->FloatSave.RegisterArea[x * 10]) ;
-		if (top>8) {
-			top = 0;
-		}
-	}
-	for (x = 0; x < 8; x++) {
-		eprintf("MM%i %016"PFMT64x"\n", x, mm[x]);
-	}
-	for (x = 0; x < 8; x++)
-	{
-		xmm[x] = (ut128)*((ut128 *)&ctx->ExtendedRegisters[(10 + x) * 16]);
-		eprintf("XMM%i %016"PFMT64x" %016"PFMT64x"\n", x, xmm[x].High, xmm[x].Low);
-	}
-
-#endif
-}
-
-void GET_FPU_XMM_YMM(HANDLE hThread)
-{
-
-	DWORD ContextSize = 0;
-	PCONTEXT Context;
-	CONTEXT ctx = { 0 };
-	void * buffer;
-	ut64 FeatureMask;
-	DWORD FeatureLength;
-	ut128 * Xmm;
-	ut128 * Ymm;
-	int Index;
-	if (w32_GetEnabledXStateFeatures != (ut64 WINAPI (*) ())-1) {
-		// Check for AVX extension
-		FeatureMask = w32_GetEnabledXStateFeatures();
-		if ((FeatureMask & XSTATE_MASK_AVX) != 0) {
-			ContextSize = 0;
-			BOOL Success = w32_InitializeContext(NULL, CONTEXT_ALL | CONTEXT_XSTATE, NULL, &ContextSize);
-			if ((Success == TRUE) || (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-				buffer = malloc(ContextSize);
-				if (buffer != NULL) {
-					Success = w32_InitializeContext(buffer, CONTEXT_ALL | CONTEXT_XSTATE, &Context, &ContextSize);
-					if (Success) {
-						Success = w32_SetXStateFeaturesMask(Context, XSTATE_MASK_AVX);
-						if (Success) {
-							Success = GetThreadContext(hThread, Context);
-							if (Success == TRUE) {
-								Success = w32_GetXStateFeaturesMask(Context, &FeatureMask);
-								if (Success == TRUE) {
-									Xmm = (ut128 *)w32_LocateXStateFeature(Context, XSTATE_LEGACY_SSE, &FeatureLength);
-									Ymm = 0;
-									if ((FeatureMask & XSTATE_MASK_AVX) != 0) {
-										// si esta inicializado los registros AVX obtenemos la parte alta si no esta sera 0.
-										Ymm = (ut128 *)w32_LocateXStateFeature(Context, XSTATE_AVX, NULL);
-									}
-									// show fpu,mm,xmm regs
-									printcontext(Context);
-									// show Ymm regs
-									for (Index = 0; Index < (FeatureLength / sizeof(*Ymm)); Index++) {
-										eprintf("Ymm%d: %016"PFMT64x" %016"PFMT64x" %016"PFMT64x" %016"PFMT64x"\n", Index, (Ymm == NULL ? 0 : Ymm[Index].High), (Ymm == NULL ? 0 : Ymm[Index].Low), Xmm[Index].High, Xmm[Index].Low);
-									}
-									free(buffer);
-									return;
-								}
-							}
-						}
-					}
-					free(buffer);
-				}
-			}
-		}
-	}
-	ctx.ContextFlags = CONTEXT_ALL ;
-	if (GetThreadContext(hThread, &ctx) == FALSE) {
-		eprintf("Error  0x%08x\n", (ut32)GetLastError());
-	}
-	else
-		printcontext(&ctx);
-}
-
-
-static int w32_reg_read (RDebug *dbg, int type, ut8 *buf, int size) {
-	int showfpu = false;
+	ut16 top = 0;
+	int x = 0, nxmm = 0,nymm = 0, showfpu = false;
 	int pid = dbg->pid;
 	int tid = dbg->tid;
-
+	HANDLE hThread = NULL;
 	if (type < -1) {
 		showfpu = true; // hack for debugging
 		type = -type;
 	}
-
-	HANDLE thread = w32_open_thread (pid, tid);
-	CONTEXT ctx __attribute__ ((aligned (16)));
-	ctx.ContextFlags = CONTEXT_ALL;
-	if (!GetThreadContext (thread, &ctx)) {
+	hThread = w32_open_thread (pid, tid);
+	memset(&ctx, 0, sizeof(CONTEXT));
+	ctx.ContextFlags = CONTEXT_ALL ;
+	if (GetThreadContext(hThread, &ctx) == FALSE) {
 		eprintf ("GetThreadContext: %x\n", (int)GetLastError ());
-		CloseHandle(thread);
+		CloseHandle(hThread);
 		return false;
 	}
-	if (type==R_REG_TYPE_FPU || type==R_REG_TYPE_MMX || type==R_REG_TYPE_XMM) {
-		if (showfpu) {
-			//printcontext(&ctx);
-			GET_FPU_XMM_YMM(thread);
+#if __MINGW64__
+	//(ut16)ctx.FltSave.ControlWord);
+	//(ut16)ctx.FltSave.StatusWord);
+	//(ut16)ctx.FltSave.TagWord);
+	//(ut32)ctx.FltSave.ErrorOffset);
+	//(ut32)ctx.FltSave.ErrorSelector);
+	//(ut32)ctx.FltSave.DataOffset);
+	//(ut32)ctx.FltSave.DataSelector);
+	//(ut32)ctx.MxCsr);
+	for (x = 0; x < 8; x++) {
+		st[x].Low = ctx.FltSave.FloatRegisters[x].Low;
+		st[x].High = (ut16)ctx.FltSave.FloatRegisters[x].High;
+	}
+	top = (ctx.FltSave.StatusWord & 0x3fff) >> 11;
+	x = 0;
+	for (x = 0; x < 8; x++) {
+		mm[top] = ctx.FltSave.FloatRegisters[x].Low;
+		tom++;
+		if (top > 7) {
+			top = 0;
 		}
 	}
-	CloseHandle(thread);
+	for (x = 0; x < 16; x++) {
+		xmm[x].High = ctx.FltSave.XmmRegisters[x].High;
+		xmm[x].Low = ctx.FltSave.XmmRegisters[x].Low;
+	}
+	nxmm = 16;
+#else
+	//(ut16)ctx.FloatSave.ControlWord);
+	// (ut16)ctx.FloatSave.StatusWord);
+	// (ut16)ctx.FloatSave.TagWord);
+	// (ut32)ctx.FloatSave.ErrorOffset);
+	// (ut32)ctx.FloatSave.ErrorSelector);
+	// (ut32)ctx.FloatSave.DataOffset);
+	// (ut32)ctx.FloatSave.DataSelector);
+	// (ut32)*(ut32 *)&ctx->ExtendedRegisters[24]);
+	for (x = 0; x < 8; x++) {
+		st[x].High = (ut16) *((ut16 *)(&ctx.FloatSave.RegisterArea[x * 10] + 8));
+		st[x].Low = (ut64)  *((ut64 *)&ctx.FloatSave.RegisterArea[x * 10]);
+	}
+	top = (ctx.FloatSave.StatusWord & 0x3fff) >> 11;
+	for (x = 0; x < 8; x++) {
+		mm[top] = *((ut64 *)&ctx.FloatSave.RegisterArea[x * 10]) ;
+		top++;
+		if (top>7) {
+			top = 0;
+		}
+	}
+	for (x = 0; x < 8; x++) {
+		xmm[x] = (ut128)*((ut128 *)&ctx.ExtendedRegisters[(10 + x) * 16]);
+	}
+	nxmm = 8;
+#endif
+	if (type==R_REG_TYPE_FPU || type==R_REG_TYPE_MMX || type==R_REG_TYPE_XMM) {
+		if (showfpu) {
+			// show fpu,mm,xmm regs
+			for (x = 0; x < 8; x++) {
+				// the conversi from long double to double only work
+				// in mingw long double is 12 bytes size
+				// in msvc long double is alias for double = 8 bytes size
+				// in gcc long double is 10 bytes (correct representation)
+				eprintf("ST%i %04x %016"PFMT64x" (%f)\n", x, st[x].High, st[x].Low, (double)(*((long double *)&st[x])));
+			}		
+			for (x = 0; x < 8; x++) {
+				eprintf("MM%i %016"PFMT64x"\n", x, mm[x]);
+			}
+			for (x = 0; x < nxmm; x++) {
+				eprintf("XMM%i %016"PFMT64x" %016"PFMT64x"\n", x, xmm[x].High, xmm[x].Low);
+			}
+			// show Ymm regs
+			nymm = GetAVX(hThread, &xmm, &ymm); 
+			if (nymm) {
+				for (x = 0; x < nymm; x++) {
+					eprintf("Ymm%d: %016"PFMT64x" %016"PFMT64x" %016"PFMT64x" %016"PFMT64x"\n", x, ymm[x].High, ymm[x].Low, xmm[x].High, xmm[x].Low );
+				}
+			}
+		}
+	}	
+	CloseHandle(hThread);
 	if (sizeof(CONTEXT) < size)
 		size = sizeof(CONTEXT);
 	memcpy (buf, &ctx, size);
+	// copy fpu
+	//memcpy (buf + 210, st, 80);
+	// copy mmX
+	//memcpy (buf + 290, mm, 64);
+	// copy xmmX
+	//memcpy (buf + 354, xmm,128);
 	return size;
 }
 
@@ -1026,11 +1048,11 @@ static int w32_reg_write (RDebug *dbg, int type, const ut8* buf, int size) {
 	HANDLE thread;
 	CONTEXT ctx __attribute__((aligned (16)));
 	thread = w32_open_thread (dbg->pid, dbg->tid);
-	ctx.ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS;
+	ctx.ContextFlags = CONTEXT_ALL;
 	GetThreadContext (thread, &ctx);
 	if (type == R_REG_TYPE_DRX || type == R_REG_TYPE_GPR || type == R_REG_TYPE_SEG) {
-		if (sizeof(CONTEXT) < size)
-			size = sizeof(CONTEXT);
+		//if (sizeof(CONTEXT) < size)
+		size = sizeof(CONTEXT);
 		memcpy (&ctx, buf, size);
 		ret = SetThreadContext (thread, &ctx)? true: false;
 	}

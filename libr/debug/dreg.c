@@ -29,7 +29,6 @@ R_API int r_debug_reg_sync(RDebug *dbg, int type, int write) {
 						"registers %d to %d\n", i, dbg->tid);
 				return false;
 			} 
-			break;// fix chungo noentiendo que demonios hace r_get_bytes si alguien me lo explica de lujo prueba rapida hacer printf del size obtenido ....	
 		} else {
 			// int bufsize = R_MAX (1024, dbg->reg->size*2); // i know. its hacky
 			int bufsize = dbg->reg->size;

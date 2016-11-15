@@ -871,39 +871,39 @@ static int GetAVX (HANDLE hThread, ut128 * xmm, ut128 * ymm) {
 		return 0;
 	}
 	// Check for AVX extension
-	FeatureMask = w32_GetEnabledXStateFeatures();
+	FeatureMask = w32_GetEnabledXStateFeatures ();
 	if ((FeatureMask & XSTATE_MASK_AVX) == 0) {
 		return 0;
 	}
-	Success = w32_InitializeContext(NULL, CONTEXT_ALL | CONTEXT_XSTATE, NULL, &ContextSize);
-	if ((Success == TRUE) || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
+	Success = w32_InitializeContext (NULL, CONTEXT_ALL | CONTEXT_XSTATE, NULL, &ContextSize);
+	if ((Success == TRUE) || (GetLastError () != ERROR_INSUFFICIENT_BUFFER)) {
 		return 0;
 	}
-	buffer = malloc(ContextSize);
+	buffer = malloc (ContextSize);
 	if (buffer == NULL) {
 		return 0;
 	}
-	Success = w32_InitializeContext(buffer, CONTEXT_ALL | CONTEXT_XSTATE, &Context, &ContextSize);
+	Success = w32_InitializeContext (buffer, CONTEXT_ALL | CONTEXT_XSTATE, &Context, &ContextSize);
 	if (Success == FALSE) {
 		free(buffer);
 		return 0;
 	}
-	Success = w32_SetXStateFeaturesMask(Context, XSTATE_MASK_AVX);
+	Success = w32_SetXStateFeaturesMask (Context, XSTATE_MASK_AVX);
 	if (Success == FALSE) {
 		free(buffer);
 		return 0;
 	}
-	Success = GetThreadContext(hThread, Context);
+	Success = GetThreadContext (hThread, Context);
 	if (Success == FALSE) {
 		free(buffer);
 		return 0;
 	}
-	Success = w32_GetXStateFeaturesMask(Context, &FeatureMask);
+	Success = w32_GetXStateFeaturesMask (Context, &FeatureMask);
 	if (Success == FALSE) {
 		free(buffer);
 		return 0;
 	}
-	Xmm = (ut128 *)w32_LocateXStateFeature(Context, XSTATE_LEGACY_SSE, &FeatureLength);
+	Xmm = (ut128 *)w32_LocateXStateFeature (Context, XSTATE_LEGACY_SSE, &FeatureLength);
         nRegs = FeatureLength / sizeof(*Xmm);
 	for (Index = 0; Index < nRegs; Index++) {
 		ymm[Index].High = 0;
@@ -919,7 +919,7 @@ static int GetAVX (HANDLE hThread, ut128 * xmm, ut128 * ymm) {
 	}
 	if ((FeatureMask & XSTATE_MASK_AVX) != 0) {
 		// check for AVX initialization and get the pointer.
-		Ymm = (ut128 *)w32_LocateXStateFeature(Context, XSTATE_AVX, NULL);
+		Ymm = (ut128 *)w32_LocateXStateFeature (Context, XSTATE_AVX, NULL);
 		for (Index = 0; Index < nRegs; Index++) {
 			ymm[Index].High = Ymm[Index].High;
 			ymm[Index].Low = Ymm[Index].Low;

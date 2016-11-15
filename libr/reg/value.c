@@ -7,8 +7,9 @@ R_API ut64 r_reg_get_value_big(RReg *reg, RRegItem *item, utX *val) {
 	RRegSet *regset;
 	int off;
 	ut64 ret = 0LL;
-	if (!reg || !item)
+	if (!reg || !item) {
 		return 0LL;
+	}
 	off = BITS2BYTES (item->offset);
 	regset = &reg->regset[item->arena];
 	switch (item->size) {

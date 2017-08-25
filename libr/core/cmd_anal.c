@@ -2926,7 +2926,20 @@ repeat:
 		r_anal_op_hint (&op, hint);
 		r_anal_hint_free (hint);
 	}
+	// for r2wars
+#if 1
+	ut64 vECX = r_reg_getv (core->anal->reg, "ecx");
+	if (op.prefix  & R_ANAL_OP_PREFIX_REP && vECX >1) {
+		char * tmp = strstr (op.esil.ptr, ",ecx,?{,5,GOTO,}");
+		op.esil.len -= 16;
+		tmp[0] = 0;
+	}
+	else {
+		r_reg_setv (core->anal->reg, name, addr + op.size);
+	}
+#else
 	r_reg_setv (core->anal->reg, name, addr + op.size);
+#endif	
 	if (ret) {
 		ut64 delay_slot = 0;
 		r_anal_esil_reg_read (esil, "$ds", &delay_slot, NULL);
@@ -3519,6 +3532,13 @@ static bool cmd_aea(RCore* core, int mode, ut64 addr, int length) {
 				addr + ptr, buf[ptr], buf[ptr + 1]);
 			break;
 		}
+		// r2wars
+#if 1
+		if (aop.prefix  & R_ANAL_OP_PREFIX_REP) {
+			char * tmp = strstr (esilstr, ",ecx,?{,5,GOTO,}");
+			tmp[0] = 0;
+		}
+#endif
 		r_anal_esil_parse (esil, esilstr);
 		r_anal_esil_stack_free (esil);
 	}
